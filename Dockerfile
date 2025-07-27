@@ -1,20 +1,40 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9-slim
+# Use Python 3.12 slim image to match project requirements
+FROM python:3.12-slim
 
-# Set the working directory in the container
-WORKDIR /usr/src/app
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
-# Copy the dependencies file to the working directory
-COPY requirements.txt .
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
 
-# Copy the rest of the application code to the working directory
+# Set the working directory
+WORKDIR /app
+
+# Copy pyproject.toml and uv.lock
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies
+RUN uv sync --frozen --no-dev
+
+# Copy the application code
 COPY . .
 
-# Expose the port that your app runs on
+# Create data directory for MCP server
+RUN mkdir -p /app/data
+
+# Expose the port
 EXPOSE 8000
 
-# Define the command to run your app
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/ || exit 1
+
+# Run the application
+CMD ["uv", "run", "uvicorn", "src.backend.web.rest.main:app", "--host", "0.0.0.0", "--port", "8000"]

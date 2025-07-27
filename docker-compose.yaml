@@ -1,0 +1,153 @@
+version: '3.8'
+
+services:
+  # Main Diary Application
+  diary-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: diary-app
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://diary_user:diary_password@postgres:5432/diary_db
+      - REDIS_URL=redis://redis:6379/0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8001
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+    volumes:
+      - diary_data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_started
+    networks:
+      - diary-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: diary-postgres
+    environment:
+      - POSTGRES_DB=diary_db
+      - POSTGRES_USER=diary_user
+      - POSTGRES_PASSWORD=diary_password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - diary-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U diary_user -d diary_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: diary-redis
+    command: redis-server --appendonly yes --requirepass redis_password
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - diary-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis_password", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ChromaDB for vector storage
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: diary-chromadb
+    environment:
+      - CHROMA_HOST=0.0.0.0
+      - CHROMA_PORT=8001
+      - ALLOW_RESET=TRUE
+    volumes:
+      - chromadb_data:/chroma/chroma
+    ports:
+      - "8001:8001"
+    networks:
+      - diary-network
+    restart: unless-stopped
+
+  # MCP Server (separate service)
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: diary-mcp-server
+    command: ["uv", "run", "python", "src/backend/mcp/run_server.py"]
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - diary_data:/app/data
+    depends_on:
+      - diary-app
+    networks:
+      - diary-network
+    restart: unless-stopped
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: diary-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - diary-app
+    networks:
+      - diary-network
+    restart: unless-stopped
+    profiles:
+      - production
+
+# Volumes for data persistence
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  chromadb_data:
+    driver: local
+  diary_data:
+    driver: local
+  nginx_logs:
+    driver: local
+
+# Networks
+networks:
+  diary-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16 

@@ -23,10 +23,10 @@ repos:
       rev: v1.11.2
       hooks:
         - id: mypy
-          entry: bash -c 'poetry run --mypy "$@"'
+          entry: bash -c 'uv run mypy "$@"'
           language: system
           types: [python]
           verbose: true
           files: \.py$
           args: ["*.py$"]
-        
+
