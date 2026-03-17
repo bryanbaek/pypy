@@ -15,7 +15,6 @@ The core directory contains fundamental application code:
 The routes directory defines HTTP routes (endpoints) for the FastAPI application:
 
 - **Chat Routes**: Endpoints for AI chat functionality with various models (OpenAI, Google, Groq).
-- **MCP Routes**: Endpoints for MCP server integration and diary management.
 
 ### 3. Services
 The services directory contains business logic:
@@ -198,5 +197,4 @@ The application includes a comprehensive Docker Compose configuration with the f
 All data is persisted using Docker volumes:
 - `postgres_data`: Database data
 - `redis_data`: Redis data
-- `chromadb_data`: ChromaDB data
-- `diary_data`: Application file storage
+

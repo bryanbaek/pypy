@@ -1,9 +1,5 @@
 set shell := ["bash", "-cuexa"]
 
-# Variables
-IMAGE_NAME := "diary-app"
-CONTAINER_NAME := "diary-container"
-
 # Default target: setup environment
 default: setup
 
@@ -157,11 +153,6 @@ compose-logs:
   @echo "Showing logs for all services..."
   docker-compose logs -f
 
-# View logs for specific service
-compose-logs-app:
-  @echo "Showing logs for diary-app..."
-  docker-compose logs -f diary-app
-
 # View logs for database
 compose-logs-db:
   @echo "Showing logs for database..."
@@ -171,21 +162,6 @@ compose-logs-db:
 compose-status:
   @echo "Status of all services:"
   docker-compose ps
-
-# Execute shell in the app container
-compose-shell:
-  @echo "Opening shell in diary-app container..."
-  docker-compose exec diary-app /bin/bash
-
-# Execute shell in the database container
-compose-shell-db:
-  @echo "Opening shell in postgres container..."
-  docker-compose exec postgres psql -U diary_user -d diary_db
-
-# Run database migrations (when implemented)
-compose-migrate:
-  @echo "Running database migrations..."
-  docker-compose exec diary-app uv run alembic upgrade head
 
 # Start with production profile (includes nginx)
 compose-prod:
@@ -199,11 +175,6 @@ compose-prod:
 compose-pull:
   @echo "Pulling latest images..."
   docker-compose pull
-
-# Restart specific service
-compose-restart-app:
-  @echo "Restarting diary-app service..."
-  docker-compose restart diary-app
 
 # Create environment file from example
 setup-env:
@@ -227,65 +198,3 @@ update:
   uv lock --upgrade
   uv sync
   @echo "Dependencies updated!"
-
-# Show project information
-info:
-  @echo "Project: diary"
-  @echo "Description: A diary application with AI integration and MCP server"
-  @echo "Python version: $(uv run python --version)"
-  @echo "UV version: $(uv --version)"
-  @echo "Virtual environment: .venv"
-  @echo ""
-  @echo "Available commands:"
-  just --list
-
-# Show help
-help:
-  @echo "Diary Application - Development Commands"
-  @echo ""
-  @echo "Setup and Development:"
-  @echo "  just setup        - Install dependencies"
-  @echo "  just setup-env    - Create .env file from example"
-  @echo "  just dev          - Start development server"
-  @echo "  just run          - Start production server"
-  @echo ""
-  @echo "Testing:"
-  @echo "  just test         - Run all tests"
-  @echo "  just mcp-test     - Test MCP server"
-  @echo "  just booking-test - Test Booking MCP server"
-  @echo ""
-  @echo "Code Quality:"
-  @echo "  just lint         - Run linters"
-  @echo "  just format       - Format code"
-  @echo "  just typecheck    - Run type checker"
-  @echo ""
-  @echo "MCP Servers:"
-  @echo "  just mcp-server     - Run original MCP server"
-  @echo "  just booking-server - Run Booking MCP server"
-  @echo ""
-  @echo "Docker (Single Container):"
-  @echo "  just docker-build - Build Docker image"
-  @echo "  just docker-run   - Run in Docker"
-  @echo "  just docker-stop  - Stop Docker container"
-  @echo "  just docker-logs  - View Docker logs"
-  @echo "  just docker-clean - Clean Docker resources"
-  @echo ""
-  @echo "Docker Compose (Full Stack):"
-  @echo "  just compose-up   - Start all services"
-  @echo "  just compose-up-logs - Start services with logs"
-  @echo "  just compose-down - Stop all services"
-  @echo "  just compose-down-volumes - Stop and remove data"
-  @echo "  just compose-rebuild - Rebuild and restart"
-  @echo "  just compose-logs - View all service logs"
-  @echo "  just compose-logs-app - View app logs"
-  @echo "  just compose-logs-db - View database logs"
-  @echo "  just compose-status - Show service status"
-  @echo "  just compose-shell - Shell into app container"
-  @echo "  just compose-shell-db - Shell into database"
-  @echo "  just compose-prod - Start with nginx (production)"
-  @echo ""
-  @echo "Maintenance:"
-  @echo "  just clean        - Clean generated files"
-  @echo "  just update       - Update dependencies"
-  @echo "  just install-hooks- Install pre-commit hooks"
-  @echo "  just info         - Show project info"
