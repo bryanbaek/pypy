@@ -10,6 +10,7 @@ The core directory contains fundamental application code:
 - **Configuration**: Settings, constants, and configuration parameters used throughout the application.
 - **Utilities**: Helper functions, decorators, middleware, and other utility classes or functions.
 - **Custom Exceptions**: Custom exception classes that are used throughout the application.
+- **Workflow Validation**: Core appointment happy-path validation (title normalization and time window checks) before persistence.
 
 ### 2. Routes
 The routes directory defines HTTP routes (endpoints) for the FastAPI application:
