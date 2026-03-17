@@ -14,10 +14,12 @@ BUSINESS_HOUR_END = time(17, 0)
 
 
 def normalize_appointment_title(title: str) -> str:
+    """Trim and collapse all whitespace in appointment titles."""
     return " ".join(title.split())
 
 
 def validate_appointment_time_window(start_time: datetime, end_time: datetime) -> None:
+    """Validate chronological order, same-day window, and 09:00-17:00 bounds."""
     if end_time <= start_time:
         raise ValueError("end_time must be after start_time")
 
@@ -47,6 +49,7 @@ def validate_appointment_window(
 async def has_appointment_conflict(
     conn, start_time: datetime, end_time: datetime
 ) -> bool:
+    """Return True when an existing appointment overlaps the requested window."""
     conflicting = await conn.fetch(
         """
         SELECT 1

@@ -70,6 +70,37 @@ def test_run_appointment_happy_path_rejects_outside_business_hours():
     assert conn.calls == []
 
 
+def test_run_appointment_happy_path_rejects_after_business_hours():
+    conn = FakeConn()
+    start_time = datetime(2026, 1, 10, 16, 30, 0)
+    end_time = datetime(2026, 1, 10, 17, 30, 0)
+
+    with pytest.raises(
+        ValueError, match="appointment must be within business hours \\(09:00-17:00\\)"
+    ):
+        asyncio.run(run_appointment_happy_path(conn, "Haircut", start_time, end_time))
+
+    assert conn.calls == []
+
+
+def test_run_appointment_happy_path_allows_business_hour_boundaries():
+    conn = FakeConn()
+    start_time = datetime(2026, 1, 10, 9, 0, 0)
+    end_time = datetime(2026, 1, 10, 17, 0, 0)
+
+    result = asyncio.run(
+        run_appointment_happy_path(
+            conn, "   All   Day   Session   ", start_time, end_time
+        )
+    )
+
+    assert result.title == "All Day Session"
+    assert result.start_time == start_time
+    assert result.end_time == end_time
+    assert len(conn.calls) == 2
+    assert conn.calls[1][1] == ("All Day Session", start_time, end_time)
+
+
 def test_run_appointment_happy_path_rejects_cross_day_window():
     conn = FakeConn()
     start_time = datetime(2026, 1, 10, 16, 0, 0)
@@ -125,3 +156,19 @@ def test_run_appointment_happy_path_rejects_empty_normalized_title():
         asyncio.run(run_appointment_happy_path(conn, "   \t   ", start_time, end_time))
 
     assert conn.calls == []
+
+
+def test_run_appointment_happy_path_normalizes_multiline_whitespace():
+    conn = FakeConn()
+    start_time = datetime(2026, 1, 10, 13, 0, 0)
+    end_time = datetime(2026, 1, 10, 14, 0, 0)
+
+    result = asyncio.run(
+        run_appointment_happy_path(
+            conn, "  Intake \n\t Consultation   Session  ", start_time, end_time
+        )
+    )
+
+    assert result.title == "Intake Consultation Session"
+    assert len(conn.calls) == 2
+    assert conn.calls[1][1] == ("Intake Consultation Session", start_time, end_time)
