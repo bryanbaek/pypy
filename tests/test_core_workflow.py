@@ -4,6 +4,7 @@ from datetime import datetime
 import pytest
 
 from src.backend.core import run_appointment_happy_path
+from src.backend.db.postgres import create_appointment
 
 
 class FakeConn:
@@ -172,3 +173,48 @@ def test_run_appointment_happy_path_normalizes_multiline_whitespace():
     assert result.title == "Intake Consultation Session"
     assert len(conn.calls) == 2
     assert conn.calls[1][1] == ("Intake Consultation Session", start_time, end_time)
+
+
+def test_create_appointment_applies_happy_path_validation_and_normalization():
+    conn = FakeConn()
+    start_time = datetime(2026, 1, 10, 10, 0, 0)
+    end_time = datetime(2026, 1, 10, 11, 0, 0)
+
+    result = asyncio.run(
+        create_appointment(conn, "  New   Client\n Intake  ", start_time, end_time)
+    )
+
+    assert result.title == "New Client Intake"
+    assert result.start_time == start_time
+    assert result.end_time == end_time
+    assert len(conn.calls) == 2
+    assert "FROM appointments" in conn.calls[0][0]
+    assert conn.calls[1][1] == ("New Client Intake", start_time, end_time)
+
+
+def test_create_appointment_rejects_conflicting_windows_via_core_validation():
+    existing_start = datetime(2026, 1, 10, 10, 30, 0)
+    existing_end = datetime(2026, 1, 10, 11, 30, 0)
+    conn = FakeConn(existing=[(existing_start, existing_end)])
+    start_time = datetime(2026, 1, 10, 10, 0, 0)
+    end_time = datetime(2026, 1, 10, 11, 0, 0)
+
+    with pytest.raises(
+        ValueError, match="appointment conflicts with an existing booking"
+    ):
+        asyncio.run(create_appointment(conn, "Haircut", start_time, end_time))
+
+    assert len(conn.calls) == 1
+
+
+def test_create_appointment_rejects_outside_business_hours_via_core_validation():
+    conn = FakeConn()
+    start_time = datetime(2026, 1, 10, 8, 59, 0)
+    end_time = datetime(2026, 1, 10, 9, 30, 0)
+
+    with pytest.raises(
+        ValueError, match="appointment must be within business hours \\(09:00-17:00\\)"
+    ):
+        asyncio.run(create_appointment(conn, "Haircut", start_time, end_time))
+
+    assert conn.calls == []
