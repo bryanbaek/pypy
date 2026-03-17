@@ -1,13 +1,10 @@
 import asyncpg  # type: ignore
 
+from src.backend.core import run_appointment_happy_path
+
 
 async def create_appointment(conn, title, start_time, end_time):
-    await conn.execute(
-        "INSERT INTO appointments (title, start_time, end_time) VALUES ($1, $2, $3)",
-        title,
-        start_time,
-        end_time,
-    )
+    return await run_appointment_happy_path(conn, title, start_time, end_time)
 
 
 async def get_appointments(conn):
