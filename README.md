@@ -10,7 +10,7 @@ The core directory contains fundamental application code:
 - **Configuration**: Settings, constants, and configuration parameters used throughout the application.
 - **Utilities**: Helper functions, decorators, middleware, and other utility classes or functions.
 - **Custom Exceptions**: Custom exception classes that are used throughout the application.
-- **Workflow Validation**: Core appointment happy-path validation before persistence, including title normalization (trim + whitespace collapsing), business-hour enforcement (09:00-17:00), and overlap conflict detection.
+- **Workflow Validation**: Core appointment happy-path validation before persistence, including title normalization (trim + whitespace collapsing), business-hour enforcement (appointments must stay within `09:00` through `17:00` on the same day), and overlap conflict detection.
 
 ### 2. Routes
 The routes directory defines HTTP routes (endpoints) for the FastAPI application:
