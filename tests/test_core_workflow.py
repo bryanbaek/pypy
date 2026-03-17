@@ -70,6 +70,19 @@ def test_run_appointment_happy_path_rejects_outside_business_hours():
     assert conn.calls == []
 
 
+def test_run_appointment_happy_path_rejects_cross_day_window():
+    conn = FakeConn()
+    start_time = datetime(2026, 1, 10, 16, 0, 0)
+    end_time = datetime(2026, 1, 11, 10, 0, 0)
+
+    with pytest.raises(
+        ValueError, match="appointment must start and end on the same day"
+    ):
+        asyncio.run(run_appointment_happy_path(conn, "Haircut", start_time, end_time))
+
+    assert conn.calls == []
+
+
 def test_run_appointment_happy_path_rejects_conflicting_window():
     existing_start = datetime(2026, 1, 10, 10, 30, 0)
     existing_end = datetime(2026, 1, 10, 11, 30, 0)
@@ -84,3 +97,31 @@ def test_run_appointment_happy_path_rejects_conflicting_window():
 
     assert len(conn.calls) == 1
     assert "FROM appointments" in conn.calls[0][0]
+
+
+def test_run_appointment_happy_path_allows_edge_aligned_non_overlapping_window():
+    existing_start = datetime(2026, 1, 10, 10, 0, 0)
+    existing_end = datetime(2026, 1, 10, 11, 0, 0)
+    conn = FakeConn(existing=[(existing_start, existing_end)])
+    start_time = datetime(2026, 1, 10, 11, 0, 0)
+    end_time = datetime(2026, 1, 10, 12, 0, 0)
+
+    result = asyncio.run(
+        run_appointment_happy_path(conn, " Follow Up ", start_time, end_time)
+    )
+
+    assert result.title == "Follow Up"
+    assert len(conn.calls) == 2
+    assert "FROM appointments" in conn.calls[0][0]
+    assert conn.calls[1][1] == ("Follow Up", start_time, end_time)
+
+
+def test_run_appointment_happy_path_rejects_empty_normalized_title():
+    conn = FakeConn()
+    start_time = datetime(2026, 1, 10, 10, 0, 0)
+    end_time = datetime(2026, 1, 10, 11, 0, 0)
+
+    with pytest.raises(ValueError, match="title must not be empty"):
+        asyncio.run(run_appointment_happy_path(conn, "   \t   ", start_time, end_time))
+
+    assert conn.calls == []
