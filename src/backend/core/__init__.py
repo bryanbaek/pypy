@@ -21,6 +21,9 @@ def validate_appointment_time_window(start_time: datetime, end_time: datetime) -
     if end_time <= start_time:
         raise ValueError("end_time must be after start_time")
 
+    if start_time.date() != end_time.date():
+        raise ValueError("appointment must start and end on the same day")
+
     start_tod = start_time.time()
     end_tod = end_time.time()
     if start_tod < BUSINESS_HOUR_START or end_tod > BUSINESS_HOUR_END:
