@@ -26,9 +26,6 @@ RUN uv sync --frozen --no-dev
 # Copy the application code
 COPY . .
 
-# Create data directory for MCP server
-RUN mkdir -p /app/data
-
 # Expose the port
 EXPOSE 8000
 

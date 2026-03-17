@@ -1,6 +1,6 @@
 # Business Booking & Ecommerce Platform
 
-A business booking and ecommerce platform with AI integration and Model Context Protocol (MCP) server capabilities for appointment scheduling, product management, and order tracking.
+A business booking and ecommerce platform with AI integration capabilities for appointment scheduling, product management, and order tracking.
 
 ## Overview
 
@@ -21,15 +21,6 @@ The services directory contains business logic:
 
 - **Database Operations**: CRUD operations and other database-related logic.
 - **AI Services**: Integration with OpenAI, Google Gemini, and Groq AI models.
-- **MCP Server**: Model Context Protocol server for business operations.
-
-### 4. MCP Server
-The MCP server provides tools for:
-
-- **Appointment Management**: Create, cancel, and manage appointment bookings.
-- **Product Catalog**: Browse, search, and purchase products.
-- **Order Tracking**: Track order status and manage customer orders.
-- **Availability Checking**: Check available appointment slots.
 
 ## Setup
 
@@ -70,8 +61,6 @@ just run          # Start production server
 #### Testing
 ```bash
 just test         # Run all tests
-just mcp-test     # Test original MCP server
-just booking-test # Test Booking MCP server
 ```
 
 #### Code Quality
@@ -79,12 +68,6 @@ just booking-test # Test Booking MCP server
 just lint         # Run linters
 just format       # Format code with ruff
 just typecheck    # Run mypy type checker
-```
-
-#### MCP Servers
-```bash
-just mcp-server     # Run original MCP server
-just booking-server # Run Booking MCP server (recommended)
 ```
 
 #### Docker (Single Container)
@@ -121,24 +104,15 @@ just help         # Show detailed help
 uv run uvicorn src.backend.web.rest.main:app --reload
 ```
 
-#### MCP Server
-```bash
-uv run python src/backend/mcp/run_server.py
-```
 
 #### Run Tests
 ```bash
 uv run pytest
-uv run python src/backend/mcp/test_server.py
 ```
 
 ## Features
 
 - **AI Integration**: Support for OpenAI GPT-4o, Google Gemini Pro/Lite, and Groq models
-- **MCP Server**: Model Context Protocol server with 9 business tools
-  - **Appointments**: Create, delete, list appointments and check availability
-  - **Products**: Browse catalog, get product details, purchase items
-  - **Orders**: Track order status, list customer orders
 - **RESTful API**: FastAPI-based REST API with automatic documentation
 - **Async Support**: Full async/await support for better performance
 - **Type Safety**: Comprehensive type hints and validation with Pydantic
@@ -157,7 +131,6 @@ The application includes a comprehensive Docker Compose configuration with the f
 - **postgres**: PostgreSQL database with business schema and sample data
 - **redis**: Redis for caching and session storage
 - **chromadb**: ChromaDB for vector storage and embeddings
-- **booking-mcp-server**: Standalone MCP server for appointment/order management
 - **nginx**: Reverse proxy with load balancing (production profile)
 
 ### Quick Start with Docker Compose
