@@ -23,6 +23,14 @@ The services directory contains business logic:
 - **Database Operations**: CRUD operations and other database-related logic.
 - **AI Services**: Integration with OpenAI, Google Gemini, and Groq AI models.
 
+### 4. Sandbox Workflow Slice
+The `sandbox/appointment` package provides a minimal layered appointment flow for orchestration practice:
+
+- **Repository**: Persistence and overlap query operations.
+- **Gateway**: Abstraction over repository/data-access interactions.
+- **Controller**: Workflow orchestration using core validation (title normalization, business-hour checks, conflict rejection).
+- **Handlers**: Request-payload translation and response shaping for service/API style entrypoints.
+
 ## Setup
 
 ### Install dependencies
