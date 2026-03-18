@@ -112,6 +112,14 @@ class FakeConn:
         return None
 
 
+class FakeConnNoInsertReturn(FakeConn):
+    async def fetchrow(self, query, *args):
+        if "INSERT INTO appointments" in query and "RETURNING" in query:
+            self.calls.append((query, args))
+            return None
+        return await super().fetchrow(query, *args)
+
+
 class FakeRepository:
     def __init__(self, conflict=False):
         self.conflict = conflict
@@ -245,6 +253,21 @@ def test_repository_has_conflict_returns_true_when_overlapping_window_exists():
     assert "FROM appointments" in conn.calls[0][0]
 
 
+def test_repository_has_conflict_supports_excluding_same_appointment():
+    existing_start = datetime(2026, 1, 10, 10, 30, 0)
+    existing_end = datetime(2026, 1, 10, 11, 30, 0)
+    conn = FakeConn(existing=[(existing_start, existing_end)])
+
+    start_time = datetime(2026, 1, 10, 10, 0, 0)
+    end_time = datetime(2026, 1, 10, 11, 0, 0)
+
+    excluded_result = asyncio.run(has_conflict(conn, start_time, end_time, 1))
+    non_excluded_result = asyncio.run(has_conflict(conn, start_time, end_time))
+
+    assert excluded_result is False
+    assert non_excluded_result is True
+
+
 def test_repository_crud_roundtrip():
     conn = FakeConn()
     start_time = datetime(2026, 1, 10, 12, 0, 0)
@@ -274,6 +297,22 @@ def test_repository_crud_roundtrip():
 
     asyncio.run(delete_appointment(conn, created["id"]))
     assert asyncio.run(get_appointment(conn, created["id"])) is None
+
+
+def test_repository_create_returns_fallback_payload_when_row_missing():
+    conn = FakeConnNoInsertReturn()
+    start_time = datetime(2026, 1, 10, 12, 0, 0)
+    end_time = datetime(2026, 1, 10, 13, 0, 0)
+
+    created = asyncio.run(
+        create_appointment(conn, "Consultation", start_time, end_time)
+    )
+
+    assert created == {
+        "title": "Consultation",
+        "start_time": start_time,
+        "end_time": end_time,
+    }
 
 
 def test_gateway_delegates_to_repository_with_connection_context():
@@ -381,6 +420,54 @@ def test_controller_update_validates_and_excludes_same_appointment_for_conflict_
     ]
 
 
+def test_controller_update_rejects_conflicting_appointment_window():
+    gateway = FakeGateway(conflict=True)
+    controller = AppointmentController(gateway)
+
+    with pytest.raises(
+        ValueError, match="appointment conflicts with an existing booking"
+    ):
+        asyncio.run(
+            controller.update_appointment(
+                1,
+                start_time=datetime(2026, 1, 10, 10, 30, 0),
+                end_time=datetime(2026, 1, 10, 11, 30, 0),
+            )
+        )
+
+    assert gateway.calls == [
+        ("get_appointment", 1),
+        (
+            "has_conflict",
+            datetime(2026, 1, 10, 10, 30, 0),
+            datetime(2026, 1, 10, 11, 30, 0),
+            1,
+        ),
+    ]
+
+
+def test_controller_update_rejects_missing_appointment():
+    gateway = FakeGateway(conflict=False)
+    gateway.appointments = {}
+    controller = AppointmentController(gateway)
+
+    with pytest.raises(ValueError, match="appointment not found"):
+        asyncio.run(controller.update_appointment(1, title="Updated"))
+
+    assert gateway.calls == [("get_appointment", 1)]
+
+
+def test_controller_delete_rejects_missing_appointment():
+    gateway = FakeGateway(conflict=False)
+    gateway.appointments = {}
+    controller = AppointmentController(gateway)
+
+    with pytest.raises(ValueError, match="appointment not found"):
+        asyncio.run(controller.delete_appointment(1))
+
+    assert gateway.calls == [("get_appointment", 1)]
+
+
 def test_handler_returns_error_for_invalid_payload():
     gateway = FakeGateway(conflict=False)
     controller = AppointmentController(gateway)
@@ -398,6 +485,52 @@ def test_handler_returns_error_for_invalid_payload():
 
     assert result["status"] == "error"
     assert "Invalid isoformat string" in result["error"]
+
+
+def test_handler_returns_error_for_missing_required_create_field():
+    gateway = FakeGateway(conflict=False)
+    controller = AppointmentController(gateway)
+
+    result = asyncio.run(
+        handle_create_appointment(
+            controller,
+            {
+                "title": "Haircut",
+                "start_time": "2026-01-10T10:00:00",
+            },
+        )
+    )
+
+    assert result["status"] == "error"
+    assert result["error"] == "'end_time'"
+
+
+def test_handler_update_returns_error_for_invalid_payload():
+    gateway = FakeGateway(conflict=False)
+    controller = AppointmentController(gateway)
+
+    result = asyncio.run(
+        handle_update_appointment(
+            controller,
+            1,
+            {
+                "start_time": "not-a-datetime",
+            },
+        )
+    )
+
+    assert result["status"] == "error"
+    assert "Invalid isoformat string" in result["error"]
+
+
+def test_handler_delete_returns_error_when_missing_appointment():
+    gateway = FakeGateway(conflict=False)
+    gateway.appointments = {}
+    controller = AppointmentController(gateway)
+
+    result = asyncio.run(handle_delete_appointment(controller, 1))
+
+    assert result == {"status": "error", "error": "appointment not found"}
 
 
 def test_handler_controller_gateway_repository_integration_happy_path():
