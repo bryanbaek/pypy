@@ -1,7 +1,33 @@
+"""Handler layer for translating payloads to controller operations."""
+
 from datetime import datetime
+from typing import Protocol
 
 
-def _as_datetime(value):
+class AppointmentControllerContract(Protocol):
+    """Controller contract used by appointment handlers."""
+
+    async def create_appointment(
+        self, title: str, start_time: datetime, end_time: datetime
+    ) -> dict: ...
+
+    async def get_appointment(self, appointment_id: int) -> dict | None: ...
+
+    async def get_appointments(self) -> list[dict]: ...
+
+    async def update_appointment(
+        self,
+        appointment_id: int,
+        title: str | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+    ) -> dict: ...
+
+    async def delete_appointment(self, appointment_id: int) -> dict: ...
+
+
+def _as_datetime(value: datetime | str) -> datetime:
+    """Parse datetime values accepted by handler payloads."""
     if isinstance(value, datetime):
         return value
     if isinstance(value, str):
@@ -9,7 +35,10 @@ def _as_datetime(value):
     raise ValueError("start_time and end_time must be datetime or ISO datetime strings")
 
 
-async def handle_create_appointment(controller, payload: dict) -> dict:
+async def handle_create_appointment(
+    controller: AppointmentControllerContract, payload: dict
+) -> dict:
+    """Handle create-appointment input payloads."""
     try:
         appointment = await controller.create_appointment(
             title=payload["title"],
@@ -22,12 +51,16 @@ async def handle_create_appointment(controller, payload: dict) -> dict:
     return {"status": "ok", "appointment": appointment}
 
 
-async def handle_get_appointments(controller) -> dict:
+async def handle_get_appointments(controller: AppointmentControllerContract) -> dict:
+    """Handle list-appointments requests."""
     appointments = await controller.get_appointments()
     return {"status": "ok", "appointments": appointments}
 
 
-async def handle_get_appointment(controller, appointment_id: int) -> dict:
+async def handle_get_appointment(
+    controller: AppointmentControllerContract, appointment_id: int
+) -> dict:
+    """Handle get-appointment requests."""
     appointment = await controller.get_appointment(appointment_id)
     if appointment is None:
         return {"status": "error", "error": "appointment not found"}
@@ -35,8 +68,9 @@ async def handle_get_appointment(controller, appointment_id: int) -> dict:
 
 
 async def handle_update_appointment(
-    controller, appointment_id: int, payload: dict
+    controller: AppointmentControllerContract, appointment_id: int, payload: dict
 ) -> dict:
+    """Handle update-appointment input payloads."""
     try:
         appointment = await controller.update_appointment(
             appointment_id=appointment_id,
@@ -54,7 +88,10 @@ async def handle_update_appointment(
     return {"status": "ok", "appointment": appointment}
 
 
-async def handle_delete_appointment(controller, appointment_id: int) -> dict:
+async def handle_delete_appointment(
+    controller: AppointmentControllerContract, appointment_id: int
+) -> dict:
+    """Handle delete-appointment requests."""
     try:
         deletion = await controller.delete_appointment(appointment_id)
     except ValueError as exc:

@@ -1,7 +1,21 @@
+"""Repository layer for sandbox appointment persistence and conflict queries."""
+
 from datetime import datetime
+from typing import Protocol
 
 
-def _row_to_appointment(row) -> dict | None:
+class AppointmentConnection(Protocol):
+    """Minimal async database interface required by repository functions."""
+
+    async def execute(self, query: str, *args: object) -> object: ...
+
+    async def fetch(self, query: str, *args: object) -> list[object]: ...
+
+    async def fetchrow(self, query: str, *args: object) -> dict | None: ...
+
+
+def _row_to_appointment(row: dict | None) -> dict | None:
+    """Convert a database row to an appointment dictionary payload."""
     if row is None:
         return None
     return {
@@ -13,11 +27,12 @@ def _row_to_appointment(row) -> dict | None:
 
 
 async def has_conflict(
-    conn,
+    conn: AppointmentConnection,
     start_time: datetime,
     end_time: datetime,
     exclude_appointment_id: int | None = None,
 ) -> bool:
+    """Return True when an appointment overlaps the requested window."""
     if exclude_appointment_id is None:
         conflicting = await conn.fetch(
             """
@@ -48,8 +63,9 @@ async def has_conflict(
 
 
 async def create_appointment(
-    conn, title: str, start_time: datetime, end_time: datetime
+    conn: AppointmentConnection, title: str, start_time: datetime, end_time: datetime
 ) -> dict:
+    """Create and return a new appointment."""
     row = await conn.fetchrow(
         """
         INSERT INTO appointments (title, start_time, end_time)
@@ -66,7 +82,10 @@ async def create_appointment(
     return appointment
 
 
-async def get_appointment(conn, appointment_id: int) -> dict | None:
+async def get_appointment(
+    conn: AppointmentConnection, appointment_id: int
+) -> dict | None:
+    """Fetch a single appointment by id."""
     row = await conn.fetchrow(
         """
         SELECT id, title, start_time, end_time
@@ -78,7 +97,8 @@ async def get_appointment(conn, appointment_id: int) -> dict | None:
     return _row_to_appointment(row)
 
 
-async def get_appointments(conn) -> list[dict]:
+async def get_appointments(conn: AppointmentConnection) -> list[dict]:
+    """List appointments ordered by start time."""
     rows = await conn.fetch(
         """
         SELECT id, title, start_time, end_time
@@ -90,12 +110,13 @@ async def get_appointments(conn) -> list[dict]:
 
 
 async def update_appointment(
-    conn,
+    conn: AppointmentConnection,
     appointment_id: int,
     title: str,
     start_time: datetime,
     end_time: datetime,
 ) -> dict | None:
+    """Update an appointment and return the updated row when found."""
     row = await conn.fetchrow(
         """
         UPDATE appointments
@@ -111,5 +132,6 @@ async def update_appointment(
     return _row_to_appointment(row)
 
 
-async def delete_appointment(conn, appointment_id: int) -> None:
+async def delete_appointment(conn: AppointmentConnection, appointment_id: int) -> None:
+    """Delete an appointment by id."""
     await conn.execute("DELETE FROM appointments WHERE id = $1", appointment_id)
