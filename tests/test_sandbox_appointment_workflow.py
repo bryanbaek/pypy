@@ -580,3 +580,37 @@ def test_handler_controller_gateway_repository_integration_happy_path():
 
     missing = asyncio.run(handle_get_appointment(controller, appointment_id))
     assert missing == {"status": "error", "error": "appointment not found"}
+
+
+def test_handler_controller_gateway_repository_rejects_overlapping_window():
+    conn = FakeConn()
+    gateway = AppointmentGateway(conn)
+    controller = AppointmentController(gateway)
+
+    first = asyncio.run(
+        handle_create_appointment(
+            controller,
+            {
+                "title": "Initial Session",
+                "start_time": "2026-01-10T10:00:00",
+                "end_time": "2026-01-10T11:00:00",
+            },
+        )
+    )
+    assert first["status"] == "ok"
+
+    overlapping = asyncio.run(
+        handle_create_appointment(
+            controller,
+            {
+                "title": "Overlapping Session",
+                "start_time": "2026-01-10T10:30:00",
+                "end_time": "2026-01-10T11:30:00",
+            },
+        )
+    )
+
+    assert overlapping == {
+        "status": "error",
+        "error": "appointment conflicts with an existing booking",
+    }
