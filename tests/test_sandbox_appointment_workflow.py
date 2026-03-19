@@ -3,6 +3,7 @@ from datetime import datetime
 
 import pytest
 
+from sandbox.appointment import handlers as appointment_handlers
 from sandbox.appointment.controller import AppointmentController
 from sandbox.appointment.gateway import AppointmentGateway
 from sandbox.appointment.handlers import (
@@ -633,3 +634,30 @@ def test_handler_controller_gateway_repository_rejects_overlapping_window():
         "status": "error",
         "error": "appointment conflicts with an existing booking",
     }
+
+
+def test_handler_happy_path_writes_core_mvp_verification_artifact(tmp_path, monkeypatch):
+    artifact_path = tmp_path / "core-mvp-20260319T170333Z-happy.md"
+    monkeypatch.setattr(
+        appointment_handlers, "HAPPY_PATH_ARTIFACT_PATH", artifact_path
+    )
+
+    gateway = FakeGateway(conflict=False)
+    controller = AppointmentController(gateway)
+
+    created = asyncio.run(
+        handle_create_appointment(
+            controller,
+            {
+                "title": "New Client Intake",
+                "start_time": "2026-01-10T10:00:00",
+                "end_time": "2026-01-10T11:00:00",
+            },
+        )
+    )
+
+    assert created["status"] == "ok"
+    assert artifact_path.exists()
+    artifact_content = artifact_path.read_text(encoding="utf-8")
+    assert "tag: core-mvp-20260319T170333Z-happy" in artifact_content
+    assert "scenario: happy-path" in artifact_content
