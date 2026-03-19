@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Protocol
 
-HAPPY_PATH_ARTIFACT_TAG = "core-mvp-20260319T173841Z-happy"
+HAPPY_PATH_ARTIFACT_TAG = "core-mvp-20260319T195344Z-happy"
 HAPPY_PATH_ARTIFACT_SCENARIO = "happy"
 HAPPY_PATH_ARTIFACT_PATH = (
     Path(__file__).resolve().parent

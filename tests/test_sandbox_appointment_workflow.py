@@ -637,7 +637,7 @@ def test_handler_controller_gateway_repository_rejects_overlapping_window():
 
 
 def test_handler_happy_path_writes_core_mvp_verification_artifact(tmp_path, monkeypatch):
-    artifact_path = tmp_path / "core-mvp-20260319T173841Z-happy.md"
+    artifact_path = tmp_path / "core-mvp-20260319T195344Z-happy.md"
     monkeypatch.setattr(
         appointment_handlers, "HAPPY_PATH_ARTIFACT_PATH", artifact_path
     )
@@ -659,7 +659,7 @@ def test_handler_happy_path_writes_core_mvp_verification_artifact(tmp_path, monk
     assert created["status"] == "ok"
     assert artifact_path.exists()
     artifact_content = artifact_path.read_text(encoding="utf-8")
-    assert "tag: core-mvp-20260319T173841Z-happy" in artifact_content
+    assert "tag: core-mvp-20260319T195344Z-happy" in artifact_content
     assert "scenario: happy" in artifact_content
 
 
