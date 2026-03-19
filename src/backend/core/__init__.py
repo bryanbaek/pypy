@@ -15,6 +15,8 @@ BUSINESS_HOUR_END = time(17, 0)
 
 def normalize_appointment_title(title: str) -> str:
     """Trim and collapse all whitespace in appointment titles."""
+    if not isinstance(title, str):
+        raise ValueError("title must be a string")
     return " ".join(title.split())
 
 
