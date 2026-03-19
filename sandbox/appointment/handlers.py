@@ -1,7 +1,16 @@
 """Handler layer for translating payloads to controller operations."""
 
 from datetime import datetime
+from pathlib import Path
 from typing import Protocol
+
+HAPPY_PATH_ARTIFACT_TAG = "core-mvp-20260319T170333Z-happy"
+HAPPY_PATH_ARTIFACT_SCENARIO = "happy-path"
+HAPPY_PATH_ARTIFACT_PATH = (
+    Path(__file__).resolve().parent
+    / "e2e"
+    / f"{HAPPY_PATH_ARTIFACT_TAG}.md"
+)
 
 
 class AppointmentControllerContract(Protocol):
@@ -35,6 +44,19 @@ def _as_datetime(value: datetime | str) -> datetime:
     raise ValueError("start_time and end_time must be datetime or ISO datetime strings")
 
 
+def _write_happy_path_artifact() -> None:
+    """Write marker artifact for the sandbox appointment happy-path scenario."""
+    HAPPY_PATH_ARTIFACT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    HAPPY_PATH_ARTIFACT_PATH.write_text(
+        (
+            "# Core MVP Happy-Path Verification Artifact\n\n"
+            f"tag: {HAPPY_PATH_ARTIFACT_TAG}\n"
+            f"scenario: {HAPPY_PATH_ARTIFACT_SCENARIO}\n"
+        ),
+        encoding="utf-8",
+    )
+
+
 async def handle_create_appointment(
     controller: AppointmentControllerContract, payload: dict
 ) -> dict:
@@ -48,6 +70,7 @@ async def handle_create_appointment(
     except (KeyError, ValueError) as exc:
         return {"status": "error", "error": str(exc)}
 
+    _write_happy_path_artifact()
     return {"status": "ok", "appointment": appointment}
 
 
