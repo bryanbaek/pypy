@@ -505,6 +505,25 @@ def test_handler_returns_error_for_missing_required_create_field():
     assert result["error"] == "'end_time'"
 
 
+def test_handler_returns_error_for_non_string_title():
+    gateway = FakeGateway(conflict=False)
+    controller = AppointmentController(gateway)
+
+    result = asyncio.run(
+        handle_create_appointment(
+            controller,
+            {
+                "title": 123,
+                "start_time": "2026-01-10T10:00:00",
+                "end_time": "2026-01-10T11:00:00",
+            },
+        )
+    )
+
+    assert result["status"] == "error"
+    assert result["error"] == "title must be a string"
+
+
 def test_handler_update_returns_error_for_invalid_payload():
     gateway = FakeGateway(conflict=False)
     controller = AppointmentController(gateway)

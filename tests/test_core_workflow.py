@@ -159,6 +159,17 @@ def test_run_appointment_happy_path_rejects_empty_normalized_title():
     assert conn.calls == []
 
 
+def test_run_appointment_happy_path_rejects_non_string_title():
+    conn = FakeConn()
+    start_time = datetime(2026, 1, 10, 10, 0, 0)
+    end_time = datetime(2026, 1, 10, 11, 0, 0)
+
+    with pytest.raises(ValueError, match="title must be a string"):
+        asyncio.run(run_appointment_happy_path(conn, 123, start_time, end_time))
+
+    assert conn.calls == []
+
+
 def test_run_appointment_happy_path_normalizes_multiline_whitespace():
     conn = FakeConn()
     start_time = datetime(2026, 1, 10, 13, 0, 0)
