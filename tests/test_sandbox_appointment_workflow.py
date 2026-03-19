@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime
+from pathlib import Path
 
 import pytest
 
@@ -673,3 +674,18 @@ def test_happy_path_marker_artifact_exists_with_expected_tag_and_scenario():
         f"scenario: {appointment_handlers.HAPPY_PATH_ARTIFACT_SCENARIO}"
         in artifact_content
     )
+
+
+def test_run_specific_happy_path_marker_artifact_exists_with_expected_tag_and_scenario():
+    artifact_path = (
+        Path(__file__).resolve().parents[1]
+        / "sandbox"
+        / "appointment"
+        / "e2e"
+        / "core-mvp-20260319T213245Z-happy.md"
+    )
+
+    assert artifact_path.exists()
+    artifact_content = artifact_path.read_text(encoding="utf-8")
+    assert "tag: core-mvp-20260319T213245Z-happy" in artifact_content
+    assert "scenario: happy" in artifact_content
