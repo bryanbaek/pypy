@@ -1,107 +1,52 @@
-"""Gateway layer for backend appointment workflows."""
+"""Gateway layer for the template document workflow."""
 
-from datetime import datetime
 from typing import Protocol
 
 from src.backend import repository as default_repository
-from src.backend.repository import AppointmentConnection
+from src.backend.repository import DocumentConnection
 
 
-class AppointmentRepository(Protocol):
-    """Repository contract used by the appointment gateway."""
+class DocumentRepository(Protocol):
+    """Repository contract used by the document gateway."""
 
-    async def has_conflict(
-        self,
-        conn: AppointmentConnection,
-        start_time: datetime,
-        end_time: datetime,
-        exclude_appointment_id: int | None = None,
-    ) -> bool: ...
+    async def get_document(
+        self, conn: DocumentConnection, document_id: str
+    ) -> dict | None: ...
 
-    async def create_appointment(
-        self,
-        conn: AppointmentConnection,
-        title: str,
-        start_time: datetime,
-        end_time: datetime,
+    async def write_document(
+        self, conn: DocumentConnection, document_id: str, title: str, content: str
     ) -> dict: ...
 
-    async def get_appointment(
-        self, conn: AppointmentConnection, appointment_id: int
-    ) -> dict | None: ...
-
-    async def get_appointments(self, conn: AppointmentConnection) -> list[dict]: ...
-
-    async def update_appointment(
-        self,
-        conn: AppointmentConnection,
-        appointment_id: int,
-        title: str,
-        start_time: datetime,
-        end_time: datetime,
-    ) -> dict | None: ...
-
-    async def delete_appointment(
-        self, conn: AppointmentConnection, appointment_id: int
-    ) -> None: ...
+    async def delete_document(self, conn: DocumentConnection, document_id: str) -> None: ...
 
 
-class AppointmentGateway:
-    """Abstraction over repository access for appointment operations."""
+class DocumentGateway:
+    """Abstraction over repository access for document operations."""
 
     def __init__(
         self,
-        conn: AppointmentConnection,
-        repository: AppointmentRepository = default_repository,
+        conn: DocumentConnection,
+        repository: DocumentRepository = default_repository,
     ) -> None:
         self._conn = conn
         self._repository = repository
 
-    async def has_conflict(
-        self,
-        start_time: datetime,
-        end_time: datetime,
-        exclude_appointment_id: int | None = None,
-    ) -> bool:
-        """Check whether a requested appointment window conflicts."""
-        return await self._repository.has_conflict(
+    async def get_document(self, document_id: str) -> dict | None:
+        """Get a single document by id."""
+        return await self._repository.get_document(self._conn, document_id)
+
+    async def write_document(self, document_id: str, title: str, content: str) -> dict:
+        """Create or update a document through the repository."""
+        return await self._repository.write_document(
             self._conn,
-            start_time,
-            end_time,
-            exclude_appointment_id=exclude_appointment_id,
+            document_id,
+            title,
+            content,
         )
 
-    async def create_appointment(
-        self, title: str, start_time: datetime, end_time: datetime
-    ) -> dict:
-        """Create an appointment through the repository."""
-        return await self._repository.create_appointment(
-            self._conn, title, start_time, end_time
-        )
-
-    async def get_appointment(self, appointment_id: int) -> dict | None:
-        """Get a single appointment by id."""
-        return await self._repository.get_appointment(self._conn, appointment_id)
-
-    async def get_appointments(self) -> list[dict]:
-        """List all appointments."""
-        return await self._repository.get_appointments(self._conn)
-
-    async def update_appointment(
-        self,
-        appointment_id: int,
-        title: str,
-        start_time: datetime,
-        end_time: datetime,
-    ) -> dict | None:
-        """Update an existing appointment by id."""
-        return await self._repository.update_appointment(
-            self._conn, appointment_id, title, start_time, end_time
-        )
-
-    async def delete_appointment(self, appointment_id: int) -> None:
-        """Delete an appointment by id."""
-        await self._repository.delete_appointment(self._conn, appointment_id)
+    async def delete_document(self, document_id: str) -> None:
+        """Delete a document by id."""
+        await self._repository.delete_document(self._conn, document_id)
 
 
-__all__ = ["AppointmentGateway", "AppointmentRepository"]
+__all__ = ["DocumentGateway", "DocumentRepository"]

@@ -1,181 +1,62 @@
-# Business Booking & Ecommerce Platform
+# FastAPI Template
 
-A business booking and ecommerce platform with AI integration capabilities for appointment scheduling, product management, and order tracking.
+This repository is a reusable Python/FastAPI template with a small document CRUD sample. The default example is intentionally domain-neutral so you can copy the layer boundaries without inheriting business-specific rules.
 
-## Overview
+## Sample Layout
 
-### 1. Core
-The core directory contains fundamental application code:
+The template demonstrates a single document flow across the backend layers in `src/backend`:
 
-- **Configuration**: Settings, constants, and configuration parameters used throughout the application.
-- **Utilities**: Helper functions, decorators, middleware, and other utility classes or functions.
-- **Custom Exceptions**: Custom exception classes that are used throughout the application.
-- **Workflow Validation**: Core appointment happy-path validation before persistence, including title normalization (trim + whitespace collapsing), business-hour enforcement (appointments must stay within `09:00` through `17:00` on the same day), and overlap conflict detection.
+- `src/backend/core`: input normalization for the sample document payload.
+- `src/backend/repository`: persistence helpers for `get`, `write` (create-or-update), and `delete`.
+- `src/backend/gateway`: connection-aware delegation into the repository layer.
+- `src/backend/controller`: workflow orchestration that applies core normalization before writes.
+- `src/backend/handlers`: request-payload translation plus a small sample artifact written during a successful document write.
+- `src/backend/db/postgres.py`: minimal database wrapper helpers for the same document sample.
 
-### 2. Routes
-The routes directory defines HTTP routes (endpoints) for the FastAPI application:
+The sandbox mirror in `sandbox/document` gives contributors a generic example slice to copy or adapt without referencing any business domain.
 
-- **Chat Routes**: Endpoints for AI chat functionality with various models (OpenAI, Google, Groq).
+## Sample Operations
 
-### 3. Services
-The services directory contains business logic:
+The default sample supports three basic operations:
 
-- **Database Operations**: CRUD operations and other database-related logic.
-- **AI Services**: Integration with OpenAI, Google Gemini, and Groq AI models.
+- `get_document(document_id)`
+- `write_document(document_id, title, content)`
+- `delete_document(document_id)`
 
-### 4. Backend Workflow Layers
-The `src/backend` package is the source of truth for backend workflow orchestration:
+`write_document` uses create-or-update semantics so the same sample covers both initial creation and later replacement.
 
-- **Repository** (`src/backend/repository`): Persistence and overlap query operations.
-- **Gateway** (`src/backend/gateway`): Abstraction over repository and connection access.
-- **Controller** (`src/backend/controller`): Workflow orchestration using core validation (title normalization, business-hour checks, conflict rejection).
-- **Handlers** (`src/backend/handlers`): Request-payload translation, response shaping, and lightweight appointment flow examples.
+## Run
 
-## Setup
+Install dependencies with your preferred toolchain. If you use `uv`:
 
-### Install dependencies
 ```bash
-# Install uv if you haven't already
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install project dependencies
 uv sync
-```
-
-## How to Run
-
-This project uses [Just](https://github.com/casey/just) as a command runner. Just provides a convenient way to run common development tasks.
-
-### Quick Start
-```bash
-# Setup the project
-just setup
-
-# Start development server
-just dev
-
-# Run tests
-just test
-```
-
-### Available Commands
-
-#### Setup and Development
-```bash
-just setup        # Install dependencies
-just dev          # Start development server with hot reload
-just run          # Start production server
-```
-
-#### Testing
-```bash
-just test         # Run all tests
-```
-
-#### Code Quality
-```bash
-just lint         # Run linters
-just format       # Format code with ruff
-just typecheck    # Run mypy type checker
-```
-
-#### Docker (Single Container)
-```bash
-just docker-build # Build Docker image
-just docker-run   # Run in Docker container
-just docker-stop  # Stop Docker container
-just docker-logs  # View Docker container logs
-just docker-clean # Clean up Docker resources
-```
-
-#### Docker Compose (Full Stack)
-```bash
-just setup-env    # Create .env file from example
-just compose-up   # Start all services (app, database, redis, chromadb)
-just compose-down # Stop all services
-just compose-logs # View logs from all services
-just compose-status # Show status of all services
-```
-
-#### Maintenance
-```bash
-just clean        # Clean generated files and caches
-just update       # Update dependencies
-just install-hooks# Install pre-commit hooks
-just info         # Show project information
-just help         # Show detailed help
-```
-
-### Manual Commands (if you prefer not to use Just)
-
-#### Main API Server
-```bash
 uv run uvicorn src.backend.web.rest.main:app --reload
 ```
 
+The included FastAPI app starts from `src/backend/web/rest/main.py`.
 
-#### Run Tests
+## Verify
+
+The default sample is exercised by the repository test suite:
+
 ```bash
 uv run pytest
 ```
 
-## Features
+The main files to inspect while adapting the template are:
 
-- **AI Integration**: Support for OpenAI GPT-4o, Google Gemini Pro/Lite, and Groq models
-- **RESTful API**: FastAPI-based REST API with automatic documentation
-- **Async Support**: Full async/await support for better performance
-- **Type Safety**: Comprehensive type hints and validation with Pydantic
-- **Database Support**: PostgreSQL with business schema and indexing
-- **Caching**: Redis for session management and caching
-- **Vector Storage**: ChromaDB for embeddings and semantic search
-- **Containerization**: Full Docker Compose setup for easy deployment
+- `src/backend/core/__init__.py`
+- `src/backend/controller/__init__.py`
+- `src/backend/repository/__init__.py`
+- `src/backend/gateway/__init__.py`
+- `src/backend/handlers/__init__.py`
+- `sandbox/document/__init__.py`
+- `tests/test_core_document_workflow.py`
+- `tests/test_backend_document_workflow.py`
+- `tests/test_sandbox_document_workflow.py`
 
-## Docker Compose Setup
+## Notes
 
-The application includes a comprehensive Docker Compose configuration with the following services:
-
-### Services Included
-
-- **booking-app**: Main FastAPI application for business operations
-- **postgres**: PostgreSQL database with business schema and sample data
-- **redis**: Redis for caching and session storage
-- **chromadb**: ChromaDB for vector storage and embeddings
-- **nginx**: Reverse proxy with load balancing (production profile)
-
-### Quick Start with Docker Compose
-
-1. **Setup environment**:
-   ```bash
-   just setup-env  # Creates .env file from env.example
-   # Edit .env file with your API keys
-   ```
-
-2. **Start all services**:
-   ```bash
-   just compose-up
-   ```
-
-3. **View logs**:
-   ```bash
-   just compose-logs
-   ```
-
-4. **Stop services**:
-   ```bash
-   just compose-down
-   ```
-
-### Available URLs
-
-- **Main API**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/docs
-- **PostgreSQL**: localhost:5432
-- **Redis**: localhost:6379
-- **ChromaDB**: http://localhost:8001
-- **Nginx** (production): http://localhost
-
-### Data Persistence
-
-All data is persisted using Docker volumes:
-- `postgres_data`: Database data
-- `redis_data`: Redis data
+- The sample is deliberately small and not production-ready.
+- The repository still includes infrastructure scaffolding such as Docker, GitHub Actions, and FastAPI app wiring so you can build on top of the template.

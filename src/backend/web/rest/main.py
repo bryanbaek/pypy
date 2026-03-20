@@ -5,4 +5,4 @@ app = FastAPI()
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the FastAPI AI API integration"}
+    return {"message": "Welcome to the FastAPI template"}

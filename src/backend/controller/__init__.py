@@ -1,112 +1,47 @@
-"""Controller layer coordinating appointment workflow validation and actions."""
+"""Controller layer coordinating the template document workflow."""
 
-from datetime import datetime
 from typing import Protocol
 
-from src.backend.core import validate_appointment_window
+from src.backend.core import prepare_document_record
 
 
-class AppointmentGatewayContract(Protocol):
-    """Gateway contract used by appointment controller orchestration."""
+class DocumentGatewayContract(Protocol):
+    """Gateway contract used by document controller orchestration."""
 
-    async def has_conflict(
-        self,
-        start_time: datetime,
-        end_time: datetime,
-        exclude_appointment_id: int | None = None,
-    ) -> bool: ...
+    async def get_document(self, document_id: str) -> dict | None: ...
 
-    async def create_appointment(
-        self, title: str, start_time: datetime, end_time: datetime
-    ) -> dict: ...
+    async def write_document(self, document_id: str, title: str, content: str) -> dict: ...
 
-    async def get_appointment(self, appointment_id: int) -> dict | None: ...
-
-    async def get_appointments(self) -> list[dict]: ...
-
-    async def update_appointment(
-        self,
-        appointment_id: int,
-        title: str,
-        start_time: datetime,
-        end_time: datetime,
-    ) -> dict | None: ...
-
-    async def delete_appointment(self, appointment_id: int) -> None: ...
+    async def delete_document(self, document_id: str) -> None: ...
 
 
-class AppointmentController:
-    """Application workflow service for appointment use cases."""
+class DocumentController:
+    """Application workflow service for the template document sample."""
 
-    def __init__(self, gateway: AppointmentGatewayContract) -> None:
+    def __init__(self, gateway: DocumentGatewayContract) -> None:
         self._gateway = gateway
 
-    async def create_appointment(
-        self, title: str, start_time: datetime, end_time: datetime
-    ) -> dict:
-        """Validate and create an appointment when no conflict exists."""
-        window = validate_appointment_window(title, start_time, end_time)
-
-        if await self._gateway.has_conflict(window.start_time, window.end_time):
-            raise ValueError("appointment conflicts with an existing booking")
-
-        return await self._gateway.create_appointment(
-            window.title,
-            window.start_time,
-            window.end_time,
+    async def write_document(self, document_id: str, title: str, content: str) -> dict:
+        """Validate and persist a document with create-or-update behavior."""
+        record = prepare_document_record(document_id, title, content)
+        return await self._gateway.write_document(
+            record.id,
+            record.title,
+            record.content,
         )
 
-    async def get_appointment(self, appointment_id: int) -> dict | None:
-        """Fetch a single appointment by id."""
-        return await self._gateway.get_appointment(appointment_id)
+    async def get_document(self, document_id: str) -> dict | None:
+        """Fetch a single document by id."""
+        return await self._gateway.get_document(document_id)
 
-    async def get_appointments(self) -> list[dict]:
-        """List all appointments."""
-        return await self._gateway.get_appointments()
-
-    async def update_appointment(
-        self,
-        appointment_id: int,
-        title: str | None = None,
-        start_time: datetime | None = None,
-        end_time: datetime | None = None,
-    ) -> dict:
-        """Update an appointment with validation and conflict checks."""
-        existing = await self._gateway.get_appointment(appointment_id)
+    async def delete_document(self, document_id: str) -> dict:
+        """Delete a document and return a normalized response payload."""
+        existing = await self._gateway.get_document(document_id)
         if existing is None:
-            raise ValueError("appointment not found")
+            raise ValueError("document not found")
 
-        window = validate_appointment_window(
-            title=existing["title"] if title is None else title,
-            start_time=existing["start_time"] if start_time is None else start_time,
-            end_time=existing["end_time"] if end_time is None else end_time,
-        )
-
-        if await self._gateway.has_conflict(
-            window.start_time,
-            window.end_time,
-            exclude_appointment_id=appointment_id,
-        ):
-            raise ValueError("appointment conflicts with an existing booking")
-
-        appointment = await self._gateway.update_appointment(
-            appointment_id,
-            window.title,
-            window.start_time,
-            window.end_time,
-        )
-        if appointment is None:
-            raise ValueError("appointment not found")
-        return appointment
-
-    async def delete_appointment(self, appointment_id: int) -> dict:
-        """Delete an appointment and return a normalized response payload."""
-        existing = await self._gateway.get_appointment(appointment_id)
-        if existing is None:
-            raise ValueError("appointment not found")
-
-        await self._gateway.delete_appointment(appointment_id)
-        return {"deleted_id": appointment_id}
+        await self._gateway.delete_document(document_id)
+        return {"deleted_id": document_id}
 
 
-__all__ = ["AppointmentController", "AppointmentGatewayContract"]
+__all__ = ["DocumentController", "DocumentGatewayContract"]

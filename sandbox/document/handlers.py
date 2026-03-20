@@ -1,9 +1,9 @@
-"""Handler layer for translating payloads to document controller operations."""
+"""Sandbox handler layer for the template document sample."""
 
 from pathlib import Path
 from typing import Protocol
 
-DOCUMENT_SAMPLE_ARTIFACT_TAG = "document-crud-template"
+DOCUMENT_SAMPLE_ARTIFACT_TAG = "sandbox-document-crud-template"
 DOCUMENT_SAMPLE_ARTIFACT_SCENARIO = "write-document"
 DOCUMENT_SAMPLE_ARTIFACT_PATH = Path(__file__).resolve().parent / "e2e" / (
     f"{DOCUMENT_SAMPLE_ARTIFACT_TAG}.md"
@@ -11,7 +11,7 @@ DOCUMENT_SAMPLE_ARTIFACT_PATH = Path(__file__).resolve().parent / "e2e" / (
 
 
 class DocumentControllerContract(Protocol):
-    """Controller contract used by document handlers."""
+    """Controller contract used by sandbox document handlers."""
 
     async def get_document(self, document_id: str) -> dict | None: ...
 
@@ -21,11 +21,10 @@ class DocumentControllerContract(Protocol):
 
 
 def _write_document_sample_artifact() -> None:
-    """Write a marker artifact for the backend document sample flow."""
     DOCUMENT_SAMPLE_ARTIFACT_PATH.parent.mkdir(parents=True, exist_ok=True)
     DOCUMENT_SAMPLE_ARTIFACT_PATH.write_text(
         (
-            "# Document CRUD Sample Artifact\n\n"
+            "# Sandbox Document CRUD Sample Artifact\n\n"
             f"tag: {DOCUMENT_SAMPLE_ARTIFACT_TAG}\n"
             f"scenario: {DOCUMENT_SAMPLE_ARTIFACT_SCENARIO}\n"
         ),
@@ -36,7 +35,6 @@ def _write_document_sample_artifact() -> None:
 async def handle_write_document(
     controller: DocumentControllerContract, payload: dict
 ) -> dict:
-    """Handle write-document input payloads."""
     try:
         document = await controller.write_document(
             document_id=payload["id"],
@@ -53,7 +51,6 @@ async def handle_write_document(
 async def handle_get_document(
     controller: DocumentControllerContract, document_id: str
 ) -> dict:
-    """Handle get-document requests."""
     document = await controller.get_document(document_id)
     if document is None:
         return {"status": "error", "error": "document not found"}
@@ -63,7 +60,6 @@ async def handle_get_document(
 async def handle_delete_document(
     controller: DocumentControllerContract, document_id: str
 ) -> dict:
-    """Handle delete-document requests."""
     try:
         deletion = await controller.delete_document(document_id)
     except ValueError as exc:

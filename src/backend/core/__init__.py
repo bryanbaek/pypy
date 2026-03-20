@@ -1,94 +1,67 @@
+"""Core helpers for the template document CRUD sample."""
+
 from dataclasses import dataclass
-from datetime import datetime, time
+from typing import Protocol
 
 
 @dataclass(frozen=True, slots=True)
-class AppointmentWindow:
+class DocumentRecord:
+    """Normalized document payload used across the sample layers."""
+
+    id: str
     title: str
-    start_time: datetime
-    end_time: datetime
+    content: str
 
 
-BUSINESS_HOUR_START = time(9, 0)
-BUSINESS_HOUR_END = time(17, 0)
+class DocumentWriteConnection(Protocol):
+    """Minimal async database interface required by core write helpers."""
+
+    async def fetchrow(self, query: str, *args: object) -> dict | None: ...
 
 
-def normalize_appointment_title(title: str) -> str:
-    """Trim and collapse all whitespace in appointment titles."""
-    if not isinstance(title, str):
-        raise ValueError("title must be a string")
-    return " ".join(title.split())
+def _normalize_required_text(field: str, value: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field} must be a string")
+
+    normalized = value.strip()
+    if not normalized:
+        raise ValueError(f"{field} must not be empty")
+    return normalized
 
 
-def validate_appointment_time_window(start_time: datetime, end_time: datetime) -> None:
-    """Validate chronological order, same-day window, and 09:00-17:00 bounds."""
-    if end_time <= start_time:
-        raise ValueError("end_time must be after start_time")
-
-    if start_time.date() != end_time.date():
-        raise ValueError("appointment must start and end on the same day")
-
-    start_tod = start_time.time()
-    end_tod = end_time.time()
-    if start_tod < BUSINESS_HOUR_START or end_tod > BUSINESS_HOUR_END:
-        raise ValueError("appointment must be within business hours (09:00-17:00)")
-
-
-def validate_appointment_window(
-    title: str, start_time: datetime, end_time: datetime
-) -> AppointmentWindow:
-    normalized_title = normalize_appointment_title(title)
-    if not normalized_title:
-        raise ValueError("title must not be empty")
-
-    validate_appointment_time_window(start_time, end_time)
-
-    return AppointmentWindow(
-        title=normalized_title, start_time=start_time, end_time=end_time
+def prepare_document_record(document_id: str, title: str, content: str) -> DocumentRecord:
+    """Normalize the sample document payload before persistence."""
+    return DocumentRecord(
+        id=_normalize_required_text("document_id", document_id),
+        title=_normalize_required_text("title", " ".join(title.split())),
+        content=_normalize_required_text("content", content),
     )
 
 
-async def has_appointment_conflict(
-    conn, start_time: datetime, end_time: datetime
-) -> bool:
-    """Return True when an existing appointment overlaps the requested window."""
-    conflicting = await conn.fetch(
+def _record_to_dict(record: DocumentRecord) -> dict:
+    return {"id": record.id, "title": record.title, "content": record.content}
+
+
+async def write_document_sample(
+    conn: DocumentWriteConnection, document_id: str, title: str, content: str
+) -> DocumentRecord | dict:
+    """Normalize and write the template document sample with create-or-update semantics."""
+    record = prepare_document_record(document_id, title, content)
+    row = await conn.fetchrow(
         """
-        SELECT 1
-        FROM appointments
-        WHERE start_time < $2
-          AND end_time > $1
-        LIMIT 1
+        INSERT INTO documents (id, title, content)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (id)
+        DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content
+        RETURNING id, title, content
         """,
-        start_time,
-        end_time,
+        record.id,
+        record.title,
+        record.content,
     )
-    return bool(conflicting)
+    if row is None:
+        return _record_to_dict(record)
+    return DocumentRecord(id=row["id"], title=row["title"], content=row["content"])
 
 
-async def run_appointment_happy_path(
-    conn, title: str, start_time: datetime, end_time: datetime
-) -> AppointmentWindow:
-    window = validate_appointment_window(title, start_time, end_time)
-    if await has_appointment_conflict(conn, window.start_time, window.end_time):
-        raise ValueError("appointment conflicts with an existing booking")
-
-    await conn.execute(
-        "INSERT INTO appointments (title, start_time, end_time) VALUES ($1, $2, $3)",
-        window.title,
-        window.start_time,
-        window.end_time,
-    )
-    return window
-
-
-__all__ = [
-    "AppointmentWindow",
-    "BUSINESS_HOUR_END",
-    "BUSINESS_HOUR_START",
-    "has_appointment_conflict",
-    "normalize_appointment_title",
-    "run_appointment_happy_path",
-    "validate_appointment_time_window",
-    "validate_appointment_window",
-]
+__all__ = ["DocumentRecord", "DocumentWriteConnection", "prepare_document_record", "write_document_sample"]
