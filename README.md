@@ -44,6 +44,10 @@ The default sample is exercised by the repository test suite:
 uv run pytest
 ```
 
+## Development
+
+For repo checks during development, `just lint` runs the repo lint checks and `just test` runs the repo test suite.
+
 The main files to inspect while adapting the template are:
 
 - `src/backend/core/__init__.py`
