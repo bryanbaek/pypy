@@ -704,3 +704,18 @@ def test_tagged_happy_path_marker_artifact_exists_with_expected_tag_and_scenario
     artifact_content = artifact_path.read_text(encoding="utf-8")
     assert "tag: core-mvp-20260319T233431Z-happy" in artifact_content
     assert "scenario: happy" in artifact_content
+
+
+def test_tagged_e2e_happy_path_artifact_exists_with_expected_tag_and_scenario():
+    artifact_path = (
+        Path(__file__).resolve().parents[1]
+        / "sandbox"
+        / "appointment"
+        / "e2e"
+        / "e2e-20260320T051727Z.md"
+    )
+
+    assert artifact_path.exists()
+    artifact_content = artifact_path.read_text(encoding="utf-8")
+    assert "tag: e2e-20260320T051727Z" in artifact_content
+    assert "scenario: happy" in artifact_content
