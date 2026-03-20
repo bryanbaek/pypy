@@ -51,7 +51,10 @@ async def handle_write_document(
 async def handle_get_document(
     controller: DocumentControllerContract, document_id: str
 ) -> dict:
-    document = await controller.get_document(document_id)
+    try:
+        document = await controller.get_document(document_id)
+    except ValueError as exc:
+        return {"status": "error", "error": str(exc)}
     if document is None:
         return {"status": "error", "error": "document not found"}
     return {"status": "ok", "document": document}

@@ -132,6 +132,16 @@ def test_controller_normalizes_before_write():
     assert gateway.calls == [("write_document", "doc-1", "Example Title", "body")]
 
 
+def test_controller_normalizes_identifier_before_get():
+    gateway = FakeGateway()
+    controller = DocumentController(gateway)
+
+    result = asyncio.run(controller.get_document("  doc-1  "))
+
+    assert result == {"id": "doc-1", "title": "Initial", "content": "Body"}
+    assert gateway.calls == [("get_document", "doc-1")]
+
+
 def test_controller_delete_rejects_missing_document():
     gateway = FakeGateway()
     gateway.documents = {}
@@ -141,6 +151,16 @@ def test_controller_delete_rejects_missing_document():
         asyncio.run(controller.delete_document("doc-1"))
 
     assert gateway.calls == [("get_document", "doc-1")]
+
+
+def test_controller_normalizes_identifier_before_delete():
+    gateway = FakeGateway()
+    controller = DocumentController(gateway)
+
+    result = asyncio.run(controller.delete_document("  doc-1  "))
+
+    assert result == {"deleted_id": "doc-1"}
+    assert gateway.calls == [("get_document", "doc-1"), ("delete_document", "doc-1")]
 
 
 def test_handler_returns_error_for_missing_write_field():
@@ -154,6 +174,14 @@ def test_handler_returns_error_for_missing_write_field():
     )
 
     assert result == {"status": "error", "error": "'content'"}
+
+
+def test_handler_returns_error_for_invalid_get_identifier():
+    controller = DocumentController(FakeGateway())
+
+    result = asyncio.run(handle_get_document(controller, "   "))
+
+    assert result == {"status": "error", "error": "document_id must not be empty"}
 
 
 def test_handler_controller_gateway_repository_integration():

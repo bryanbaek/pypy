@@ -81,6 +81,14 @@ def test_sandbox_handlers_integration_and_artifact(tmp_path, monkeypatch):
     assert "scenario: write-document" in artifact_content
 
 
+def test_sandbox_handler_returns_error_for_invalid_get_identifier():
+    controller = DocumentController(DocumentGateway(FakeConn()))
+
+    result = asyncio.run(handle_get_document(controller, "   "))
+
+    assert result == {"status": "error", "error": "document_id must not be empty"}
+
+
 def test_sandbox_document_sample_artifact_exists():
     artifact_path = (
         Path(__file__).resolve().parents[1]

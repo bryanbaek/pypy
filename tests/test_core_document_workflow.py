@@ -2,7 +2,11 @@ import asyncio
 
 import pytest
 
-from src.backend.core import prepare_document_record, write_document_sample
+from src.backend.core import (
+    normalize_document_id,
+    prepare_document_record,
+    write_document_sample,
+)
 from src.backend.db.postgres import write_document
 
 
@@ -44,6 +48,10 @@ def test_prepare_document_record_rejects_missing_identifier():
 def test_prepare_document_record_rejects_non_string_title():
     with pytest.raises(ValueError, match="title must be a string"):
         prepare_document_record("doc-1", 123, "body")
+
+
+def test_normalize_document_id_trims_surrounding_whitespace():
+    assert normalize_document_id("  doc-1  ") == "doc-1"
 
 
 def test_write_document_sample_persists_normalized_record():
