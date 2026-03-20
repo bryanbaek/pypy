@@ -38,6 +38,11 @@ def prepare_document_record(document_id: str, title: str, content: str) -> Docum
     )
 
 
+def normalize_document_id(document_id: str) -> str:
+    """Normalize a document identifier for non-write document operations."""
+    return _normalize_required_text("document_id", document_id)
+
+
 def _record_to_dict(record: DocumentRecord) -> dict:
     return {"id": record.id, "title": record.title, "content": record.content}
 
@@ -64,4 +69,10 @@ async def write_document_sample(
     return DocumentRecord(id=row["id"], title=row["title"], content=row["content"])
 
 
-__all__ = ["DocumentRecord", "DocumentWriteConnection", "prepare_document_record", "write_document_sample"]
+__all__ = [
+    "DocumentRecord",
+    "DocumentWriteConnection",
+    "normalize_document_id",
+    "prepare_document_record",
+    "write_document_sample",
+]
