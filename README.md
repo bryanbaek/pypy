@@ -13,7 +13,6 @@ The template demonstrates a single document flow across the backend layers in `s
 - `src/backend/handlers`: request-payload translation plus a small sample artifact written during a successful document write.
 - `src/backend/db/postgres.py`: minimal database wrapper helpers for the same document sample.
 
-The sandbox mirror in `sandbox/document` gives contributors a generic example slice to copy or adapt without referencing any business domain.
 
 ## Sample Operations
 
@@ -55,10 +54,8 @@ The main files to inspect while adapting the template are:
 - `src/backend/repository/__init__.py`
 - `src/backend/gateway/__init__.py`
 - `src/backend/handlers/__init__.py`
-- `sandbox/document/__init__.py`
 - `tests/test_core_document_workflow.py`
 - `tests/test_backend_document_workflow.py`
-- `tests/test_sandbox_document_workflow.py`
 
 ## Notes
 
