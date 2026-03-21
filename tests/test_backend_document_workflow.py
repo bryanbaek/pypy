@@ -2,15 +2,19 @@ import asyncio
 
 import pytest
 
-from src.backend import handlers as document_handlers
-from src.backend.controller import DocumentController
-from src.backend.gateway import DocumentGateway
-from src.backend.handlers import (
+import src.backend.handlers.document_handlers as document_handlers
+from src.backend.controller.document_controller import DocumentController
+from src.backend.gateway.document_gateway import DocumentGateway
+from src.backend.handlers.document_handlers import (
     handle_delete_document,
     handle_get_document,
     handle_write_document,
 )
-from src.backend.repository import delete_document, get_document, write_document
+from src.backend.repository.document_repository import (
+    delete_document,
+    get_document,
+    write_document,
+)
 
 
 class FakeConn:

@@ -53,13 +53,20 @@ For repo checks during development, use `just lint` and `just test` after `uv sy
 
 The main files to inspect while adapting the template are:
 
-- `src/backend/core/__init__.py`
-- `src/backend/controller/__init__.py`
-- `src/backend/repository/__init__.py`
-- `src/backend/gateway/__init__.py`
-- `src/backend/handlers/__init__.py`
+- `src/backend/core/document_workflow.py`
+- `src/backend/core/appointment_workflow.py`
+- `src/backend/controller/document_controller.py`
+- `src/backend/controller/appointment_controller.py`
+- `src/backend/repository/document_repository.py`
+- `src/backend/repository/appointment_repository.py`
+- `src/backend/gateway/document_gateway.py`
+- `src/backend/gateway/appointment_gateway.py`
+- `src/backend/handlers/document_handlers.py`
+- `src/backend/handlers/appointment_handlers.py`
 - `tests/test_core_document_workflow.py`
+- `tests/test_core_workflow.py`
 - `tests/test_backend_document_workflow.py`
+- `tests/test_backend_appointment_workflow.py`
 
 ## Notes
 

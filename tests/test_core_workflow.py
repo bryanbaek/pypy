@@ -3,7 +3,7 @@ from datetime import datetime
 
 import pytest
 
-from src.backend.core import run_appointment_happy_path
+from src.backend.core.appointment_workflow import run_appointment_happy_path
 from src.backend.db.postgres import create_appointment
 
 

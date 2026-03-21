@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from src.backend.core import (
+from src.backend.core.document_workflow import (
     normalize_document_id,
     prepare_document_record,
     write_document_sample,
