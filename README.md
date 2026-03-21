@@ -37,15 +37,19 @@ The included FastAPI app starts from `src/backend/web/rest/main.py`.
 
 ## Verify
 
-The default sample is exercised by the repository test suite:
+After syncing dependencies, run the repository verification commands from the repo root:
 
 ```bash
-uv run pytest
+just lint
+just test
 ```
+
+`just lint` runs `uv run ruff check .` followed by `uv run ty check`.
+`just test` runs `uv run pytest tests`.
 
 ## Development
 
-For repo checks during development, `just lint` runs the repo lint checks and `just test` runs the repo test suite.
+For repo checks during development, use `just lint` and `just test` after `uv sync`.
 
 The main files to inspect while adapting the template are:
 

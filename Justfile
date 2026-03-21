@@ -1,5 +1,6 @@
 lint:
-  test -f README.md
+  uv run ruff check .
+  uv run ty check
 
 test:
-  test -f tests/test_backend_document_workflow.py
+  uv run pytest tests
