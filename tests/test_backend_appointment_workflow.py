@@ -3,17 +3,17 @@ from datetime import datetime
 
 import pytest
 
-from src.backend import handlers as appointment_handlers
-from src.backend.controller import AppointmentController
-from src.backend.gateway import AppointmentGateway
-from src.backend.handlers import (
+import src.backend.handlers.appointment_handlers as appointment_handlers
+from src.backend.controller.appointment_controller import AppointmentController
+from src.backend.gateway.appointment_gateway import AppointmentGateway
+from src.backend.handlers.appointment_handlers import (
     handle_create_appointment,
     handle_delete_appointment,
     handle_get_appointment,
     handle_get_appointments,
     handle_update_appointment,
 )
-from src.backend.repository import (
+from src.backend.repository.appointment_repository import (
     create_appointment,
     delete_appointment,
     get_appointment,
