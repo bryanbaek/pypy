@@ -3,7 +3,18 @@
 from datetime import datetime
 from typing import Protocol
 
-from src.backend.core.appointment_workflow import prepare_appointment_record
+
+def _prepare_appointment_payload(
+    title: str,
+    start_time: datetime,
+    end_time: datetime,
+) -> tuple[str, datetime, datetime]:
+    normalized_title = title.strip()
+    if not normalized_title:
+        raise ValueError("title must not be empty")
+    if end_time <= start_time:
+        raise ValueError("end_time must be after start_time")
+    return normalized_title, start_time, end_time
 
 
 class AppointmentGatewayContract(Protocol):
@@ -40,16 +51,18 @@ class AppointmentController:
     async def create_appointment(
         self, title: str, start_time: datetime, end_time: datetime
     ) -> dict:
-        appointment = prepare_appointment_record(title, start_time, end_time)
+        normalized_title, normalized_start_time, normalized_end_time = (
+            _prepare_appointment_payload(title, start_time, end_time)
+        )
         if await self._gateway.has_conflict(
-            appointment.start_time,
-            appointment.end_time,
+            normalized_start_time,
+            normalized_end_time,
         ):
             raise ValueError("appointment conflicts with an existing booking")
         return await self._gateway.create_appointment(
-            appointment.title,
-            appointment.start_time,
-            appointment.end_time,
+            normalized_title,
+            normalized_start_time,
+            normalized_end_time,
         )
 
     async def get_appointment(self, appointment_id: int) -> dict | None:
@@ -70,23 +83,25 @@ class AppointmentController:
         if existing is None:
             raise ValueError("appointment not found")
 
-        appointment = prepare_appointment_record(
-            existing["title"] if title is None else title,
-            existing["start_time"] if start_time is None else start_time,
-            existing["end_time"] if end_time is None else end_time,
+        normalized_title, normalized_start_time, normalized_end_time = (
+            _prepare_appointment_payload(
+                existing["title"] if title is None else title,
+                existing["start_time"] if start_time is None else start_time,
+                existing["end_time"] if end_time is None else end_time,
+            )
         )
         if await self._gateway.has_conflict(
-            appointment.start_time,
-            appointment.end_time,
+            normalized_start_time,
+            normalized_end_time,
             exclude_appointment_id=appointment_id,
         ):
             raise ValueError("appointment conflicts with an existing booking")
 
         updated = await self._gateway.update_appointment(
             appointment_id,
-            appointment.title,
-            appointment.start_time,
-            appointment.end_time,
+            normalized_title,
+            normalized_start_time,
+            normalized_end_time,
         )
         if updated is None:
             raise ValueError("appointment not found")
