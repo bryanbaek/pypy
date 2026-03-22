@@ -42,20 +42,22 @@ class OpenAISettings(BaseModel):
     def from_env(cls, environ: Mapping[str, str] | None = None) -> "OpenAISettings":
         """Build OpenAI settings from environment variables."""
         source = os.environ if environ is None else environ
-        return cls(
-            api_key=_read_optional_env(source, "OPENAI_API_KEY"),
-            model=_read_optional_env(source, "OPENAI_MODEL"),
-            base_url=_read_optional_env(source, "OPENAI_BASE_URL"),
-            timeout_s=_read_optional_env(
-                source,
-                "OPENAI_TIMEOUT_S",
-                default=DEFAULT_OPENAI_TIMEOUT_S,
-            ),
-            max_retries=_read_optional_env(
-                source,
-                "OPENAI_MAX_RETRIES",
-                default=DEFAULT_OPENAI_MAX_RETRIES,
-            ),
+        return cls.model_validate(
+            {
+                "api_key": _read_optional_env(source, "OPENAI_API_KEY"),
+                "model": _read_optional_env(source, "OPENAI_MODEL"),
+                "base_url": _read_optional_env(source, "OPENAI_BASE_URL"),
+                "timeout_s": _read_optional_env(
+                    source,
+                    "OPENAI_TIMEOUT_S",
+                    default=DEFAULT_OPENAI_TIMEOUT_S,
+                ),
+                "max_retries": _read_optional_env(
+                    source,
+                    "OPENAI_MAX_RETRIES",
+                    default=DEFAULT_OPENAI_MAX_RETRIES,
+                ),
+            }
         )
 
 

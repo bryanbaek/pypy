@@ -1,6 +1,11 @@
 import "./style.css";
 
 const app = document.querySelector<HTMLDivElement>("#app");
+const defaultBackendUrl = "http://localhost:8000";
+const configuredBackendUrl = import.meta.env.VITE_BACKEND_URL ?? defaultBackendUrl;
+const backendUrl = configuredBackendUrl.endsWith("/")
+    ? configuredBackendUrl.slice(0, -1)
+    : configuredBackendUrl;
 
 if (!app) {
     throw new Error("Frontend app root was not found.");
@@ -17,10 +22,10 @@ app.innerHTML = `
         <code>src/frontend</code> as a lightweight starting point for UI work.
       </p>
       <div class="hero-actions">
-        <a href="http://localhost:8000/" target="_blank" rel="noreferrer">
+        <a href="${backendUrl}/" target="_blank" rel="noreferrer">
           Open FastAPI sample
         </a>
-        <a href="http://localhost:8000/health" target="_blank" rel="noreferrer">
+        <a href="${backendUrl}/health" target="_blank" rel="noreferrer">
           Check backend health
         </a>
       </div>

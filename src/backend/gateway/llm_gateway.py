@@ -11,10 +11,13 @@ from pydantic import BaseModel, ValidationError
 
 from src.backend.settings import OpenAISettings, get_openai_settings
 
+AsyncOpenAI: Any | None
 try:
-    from openai import AsyncOpenAI
+    from openai import AsyncOpenAI as _AsyncOpenAI
 except ImportError:  # pragma: no cover - depends on local environment setup
     AsyncOpenAI = None
+else:
+    AsyncOpenAI = _AsyncOpenAI
 
 ResponseModelT = TypeVar("ResponseModelT", bound=BaseModel)
 
@@ -134,6 +137,10 @@ class OpenAILLMGateway(LLMGateway):
         return self._validate_payload(payload, response_model)
 
     def _build_client(self) -> Any:
+        if AsyncOpenAI is None:  # pragma: no cover - guarded in __init__
+            raise LLMGatewayConfigurationError(
+                "The openai package must be installed when no client is injected."
+            )
         client_kwargs: dict[str, Any] = {
             "api_key": self._settings.api_key,
             "timeout": self._settings.timeout_s,

@@ -2,6 +2,7 @@
 
 import asyncio
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 from pydantic import BaseModel
@@ -25,9 +26,9 @@ class ExampleStructuredResponse(BaseModel):
 class StubResponsesClient:
     def __init__(self, response: object) -> None:
         self._response = response
-        self.calls: list[dict[str, object]] = []
+        self.calls: list[dict[str, Any]] = []
 
-    async def create(self, **kwargs: object) -> object:
+    async def create(self, **kwargs: Any) -> object:
         self.calls.append(kwargs)
         return self._response
 
