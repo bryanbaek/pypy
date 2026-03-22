@@ -17,21 +17,19 @@ ENV PATH="/root/.local/bin:$PATH"
 # Set the working directory
 WORKDIR /app
 
-# Copy pyproject.toml and uv.lock
-COPY pyproject.toml uv.lock ./
+# Copy project metadata and source used to build the application environment
+COPY pyproject.toml uv.lock README.md ./
+COPY src ./src
 
 # Install dependencies
 RUN uv sync --frozen --no-dev
-
-# Copy the application code
-COPY . .
 
 # Expose the port
 EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/ || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # Run the application
-CMD ["uv", "run", "uvicorn", "src.backend.web.rest.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "src.backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
