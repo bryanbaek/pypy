@@ -82,6 +82,7 @@ just test
 
 `just lint` runs `uv run ruff check .` followed by `uv run ty check`.
 `just test` runs `uv run pytest`, which includes colocated `*_test.py` modules under `src/`.
+Pull requests to `main` and pushes to `main` run the same lint and test commands in GitHub Actions.
 
 ## Development
 

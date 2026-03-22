@@ -34,6 +34,20 @@ class StubAppointmentGateway:
             "end_time": end_time,
         }
 
+    async def get_appointment(self, appointment_id: int) -> dict | None:
+        return None
+
+    async def get_appointments(self) -> list[dict]:
+        return []
+
+    async def update_appointment(
+        self, appointment_id: int, title: str, start_time: datetime, end_time: datetime
+    ) -> dict | None:
+        return None
+
+    async def delete_appointment(self, appointment_id: int) -> None:
+        return None
+
 
 def test_create_appointment_normalizes_title() -> None:
     gateway = StubAppointmentGateway()

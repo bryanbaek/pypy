@@ -1,6 +1,6 @@
 """Gateway layer for the template document workflow."""
 
-from typing import Protocol
+from typing import Protocol, cast
 
 import src.backend.repository.document_repository as default_repository
 from src.backend.repository.document_repository import DocumentConnection
@@ -28,7 +28,7 @@ class DocumentGateway:
     def __init__(
         self,
         conn: DocumentConnection,
-        repository: DocumentRepository = default_repository,
+        repository: DocumentRepository = cast(DocumentRepository, default_repository),
     ) -> None:
         self._conn = conn
         self._repository = repository
