@@ -1,11 +1,12 @@
 # FastAPI Template
 
-This repository is a reusable Python/FastAPI template with a small document CRUD sample. The default example is intentionally domain-neutral so you can copy the layer boundaries without inheriting business-specific rules.
+This repository is a reusable Python/FastAPI template with a small document CRUD sample. The default example is intentionally domain-neutral so you can copy the layer boundaries without inheriting business-specific rules. A minimal Bun + Vite + TypeScript frontend starter also lives alongside the backend so the template includes a simple browser-facing demo surface.
 
 ## Sample Layout
 
-The template demonstrates a single document flow across the backend layers in `src/backend`:
+The template includes a lightweight frontend starter in `src/frontend` plus the existing document flow in `src/backend`:
 
+- `src/frontend`: Bun + Vite + TypeScript demo page for browser-facing starter work.
 - `src/backend/controller`: workflow orchestration plus input normalization for the sample document payload.
 - `src/backend/repository`: persistence helpers for `get`, `write` (create-or-update), and `delete`.
 - `src/backend/gateway`: connection-aware delegation into the repository layer.
@@ -24,22 +25,57 @@ The default sample supports three basic operations:
 `write_document` uses create-or-update semantics so the same sample covers both initial creation and later replacement.
 The controller normalizes document ids and titles before delegating to the gateway and repository layers.
 
+## Frontend Demo
+
+The frontend sample lives in `src/frontend`. It is intentionally lightweight and domain-neutral: a single Bun + Vite + TypeScript page that gives contributors a concrete place to start UI work without replacing the existing FastAPI document workflow.
+
 ## Run
 
-Install dependencies with your preferred toolchain. If you use `uv`:
+### Backend
+
+Install backend dependencies with your preferred Python toolchain. If you use `uv`:
 
 ```bash
 uv sync
 uv run uvicorn src.backend.main:app --reload
 ```
 
-To run the same application in Docker:
+The included FastAPI app starts from `src/backend/main.py`.
+
+To run the same backend application in Docker:
 
 ```bash
 docker compose up --build
 ```
 
-The included FastAPI app starts from `src/backend/main.py`.
+### Frontend
+
+The frontend starter uses Bun as its package manager/runtime. After installing Bun locally, install frontend dependencies from the repo root:
+
+```bash
+cd src/frontend
+bun install
+```
+
+Start the Vite development server:
+
+```bash
+cd src/frontend
+bun run dev
+```
+
+Then open `http://localhost:5173` in a browser. The demo page includes quick links to the FastAPI sample on `http://localhost:8000`, but the frontend starter runs as a separate dev server so it does not change the backend document example.
+
+Create a production build with:
+
+```bash
+cd src/frontend
+bun run build
+```
+
+The built assets are written to `src/frontend/dist/`.
+
+The checked-in `Dockerfile` and `docker-compose.yaml` continue to target the FastAPI app only; the frontend demo is intentionally a local Bun/Vite workflow.
 
 ## Postgres Bootstrap
 
@@ -89,6 +125,10 @@ For repo checks during development, use `just lint` and `just test` after `uv sy
 
 The main files to inspect while adapting the template are:
 
+- `src/frontend/package.json`
+- `src/frontend/index.html`
+- `src/frontend/src/main.ts`
+- `src/frontend/src/style.css`
 - `src/backend/main.py`
 - `src/backend/db/postgres.py`
 - `src/backend/db/init-db.sql`

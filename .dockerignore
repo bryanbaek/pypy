@@ -75,6 +75,7 @@ chromadb_data/
 dist/
 build/
 *.egg-info/
+node_modules/
 
 # Dependencies (will be installed in container)
 Pipfile
