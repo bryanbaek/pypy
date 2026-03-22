@@ -1,7 +1,7 @@
 """Gateway layer for the sample appointment workflow."""
 
 from datetime import datetime
-from typing import Protocol
+from typing import Protocol, cast
 
 import src.backend.repository.appointment_repository as default_repository
 from src.backend.repository.appointment_repository import AppointmentConnection
@@ -52,7 +52,9 @@ class AppointmentGateway:
     def __init__(
         self,
         conn: AppointmentConnection,
-        repository: AppointmentRepository = default_repository,
+        repository: AppointmentRepository = cast(
+            AppointmentRepository, default_repository
+        ),
     ) -> None:
         self._conn = conn
         self._repository = repository

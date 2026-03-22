@@ -107,7 +107,12 @@ async def get_appointments(conn: AppointmentConnection) -> list[dict]:
         ORDER BY start_time ASC
         """
     )
-    return [_row_to_appointment(row) for row in rows if row is not None]
+    appointments: list[dict] = []
+    for row in rows:
+        appointment = _row_to_appointment(row)
+        if appointment is not None:
+            appointments.append(appointment)
+    return appointments
 
 
 async def update_appointment(
