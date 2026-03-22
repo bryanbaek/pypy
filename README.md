@@ -42,12 +42,6 @@ uv run uvicorn src.backend.main:app --reload
 
 The included FastAPI app starts from `src/backend/main.py`.
 
-To run the same backend application in Docker:
-
-```bash
-docker compose up --build
-```
-
 ### Frontend
 
 The frontend starter uses Bun as its package manager/runtime. After installing Bun locally, install frontend dependencies from the repo root:
@@ -64,7 +58,7 @@ cd src/frontend
 bun run dev
 ```
 
-Then open `http://localhost:5173` in a browser. The demo page includes quick links to the FastAPI sample on `http://localhost:8000`, but the frontend starter runs as a separate dev server so it does not change the backend document example.
+Then open `http://localhost:5173` in a browser. The demo page links to the FastAPI sample using `VITE_BACKEND_URL`, which defaults to `http://localhost:8000` for local development.
 
 Create a production build with:
 
@@ -75,7 +69,28 @@ bun run build
 
 The built assets are written to `src/frontend/dist/`.
 
-The checked-in `Dockerfile` and `docker-compose.yaml` continue to target the FastAPI app only; the frontend demo is intentionally a local Bun/Vite workflow.
+### Docker Compose
+
+For the full local stack, copy `env.example` to `.env`, adjust any ports or database credentials you need, and then start the services:
+
+```bash
+cp env.example .env
+docker compose up --build
+```
+
+By default, the compose stack exposes:
+
+- FastAPI on `http://localhost:8000`
+- Bun/Vite frontend on `http://localhost:5173`
+- Postgres on `localhost:5432`
+
+`docker-compose.yaml` reads its local database and app settings from the variables you copied from `env.example` into `.env`, including `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `BACKEND_PORT`, `FRONTEND_PORT`, and `VITE_BACKEND_URL`.
+The frontend service runs the existing app in `src/frontend`, the backend service continues to run `src.backend.main:app`, and the Postgres service mounts the bootstrap SQL from `src/backend/db/init-db.sql`.
+If you change the published backend URL, update `VITE_BACKEND_URL` so the frontend demo links still point at the FastAPI service.
+
+The Postgres data directory lives in the named `postgres-data` volume.
+That means `docker compose stop`, `docker compose start`, and `docker compose down` preserve your sample document data, appointment data, and workflow state.
+Run `docker compose down -v` only when you want to remove the named volume and force Postgres to initialize a fresh database on the next `docker compose up`.
 
 ## Postgres Bootstrap
 
@@ -84,29 +99,15 @@ It creates the sample `documents` and `appointments` tables expected by the repo
 All workflow-specific Postgres CRUD reads and writes live in `src/backend/repository/document_repository.py` and `src/backend/repository/appointment_repository.py`.
 The adjacent `src/backend/db/postgres.py` module only points to the bootstrap asset from the Python side without owning sample-specific DAO behavior.
 
+When you start the compose stack, `docker-compose.yaml` mounts that same SQL file into the official Postgres entrypoint directory at `/docker-entrypoint-initdb.d/init-db.sql`.
+The official Postgres image applies files from that directory only when it initializes a fresh data directory, so the named `postgres-data` volume preserves both schema and data across container recreation.
+If you need the bootstrap script to run again after changing the schema, remove the volume with `docker compose down -v` before starting the stack again.
+
 Apply the schema to an existing local Postgres database with:
 
 ```bash
 psql "$DATABASE_URL" -f src/backend/db/init-db.sql
 ```
-
-For Docker-based startup, mount the same file into the official Postgres entrypoint directory.
-The current `docker-compose.yaml` only starts the FastAPI app, so add a Postgres service with a volume such as:
-
-```yaml
-services:
-  postgres:
-    image: postgres:16
-    environment:
-      POSTGRES_DB: pypy
-      POSTGRES_USER: pypy
-      POSTGRES_PASSWORD: pypy
-    volumes:
-      - ./src/backend/db/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
-```
-
-The official Postgres image applies files in `/docker-entrypoint-initdb.d/` only when it initializes a fresh data directory.
-If you are reusing an existing local volume, rerun the `psql` command above instead.
 
 ## Verify
 
