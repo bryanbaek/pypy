@@ -1,4 +1,7 @@
-"""Postgres bootstrap helpers for repository-owned database assets."""
+"""Postgres bootstrap helpers for repository-owned database assets.
+
+Workflow-specific CRUD queries live under ``src.backend.repository``.
+"""
 
 from pathlib import Path
 
