@@ -2,8 +2,8 @@
 
 from typing import Protocol, cast
 
-import src.backend.repository.document_repository as default_repository
-from src.backend.repository.document_repository import DocumentConnection
+import src.backend.repository as default_repository
+from src.backend.repository import DocumentConnection
 
 
 class DocumentRepository(Protocol):

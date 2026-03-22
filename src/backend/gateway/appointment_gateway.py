@@ -3,8 +3,8 @@
 from datetime import datetime
 from typing import Protocol, cast
 
-import src.backend.repository.appointment_repository as default_repository
-from src.backend.repository.appointment_repository import AppointmentConnection
+import src.backend.repository as default_repository
+from src.backend.repository import AppointmentConnection
 
 
 class AppointmentRepository(Protocol):

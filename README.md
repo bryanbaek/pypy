@@ -4,12 +4,12 @@ This repository is a reusable Python/FastAPI template with a small document CRUD
 
 ## Sample Layout
 
-The template includes a lightweight frontend starter in `src/frontend` plus the existing document flow in `src/backend`:
+The template includes a lightweight frontend starter in `src/frontend` plus the existing sample workflows in `src/backend`:
 
 - `src/frontend`: Bun + Vite + TypeScript demo page for browser-facing starter work.
 - `src/backend/controller`: workflow orchestration plus input normalization for the sample document payload.
-- `src/backend/repository`: persistence helpers for `get`, `write` (create-or-update), and `delete`.
-- `src/backend/gateway`: connection-aware delegation into the repository layer.
+- `src/backend/repository`: canonical Postgres read/write helpers for the sample document and appointment CRUD flows.
+- `src/backend/gateway`: connection-aware delegation into the repository package rather than issuing SQL directly.
 - `src/backend/handlers`: request-payload translation plus a small sample artifact written during a successful document write.
 - `src/backend/db/postgres.py`: repository-owned Postgres bootstrap helpers and the adjacent `init-db.sql` schema used for the sample tables plus durable workflow state storage.
 
@@ -23,7 +23,7 @@ The default sample supports three basic operations:
 - `delete_document(document_id)`
 
 `write_document` uses create-or-update semantics so the same sample covers both initial creation and later replacement.
-The controller normalizes document ids and titles before delegating to the gateway and repository layers.
+The controller normalizes document ids and titles before delegating to the gateway and repository layers, and the same layering applies to the sample appointment flow.
 
 ## Frontend Demo
 
@@ -81,7 +81,8 @@ The checked-in `Dockerfile` and `docker-compose.yaml` continue to target the Fas
 
 The checked-in bootstrap script lives at `src/backend/db/init-db.sql`.
 It creates the sample `documents` and `appointments` tables expected by the repository layer, plus the durable workflow tables `workflow_state_store` and `workflow_state_transitions`.
-The adjacent `src/backend/db/postgres.py` module points to the bootstrap asset from the Python side without wiring new runtime behavior into the template.
+All workflow-specific Postgres CRUD reads and writes live in `src/backend/repository/document_repository.py` and `src/backend/repository/appointment_repository.py`.
+The adjacent `src/backend/db/postgres.py` module only points to the bootstrap asset from the Python side without owning sample-specific DAO behavior.
 
 Apply the schema to an existing local Postgres database with:
 
@@ -137,6 +138,7 @@ The main files to inspect while adapting the template are:
 - `src/backend/controller/document_controller_test.py`
 - `src/backend/controller/appointment_controller.py`
 - `src/backend/controller/appointment_controller_test.py`
+- `src/backend/repository/__init__.py`
 - `src/backend/repository/document_repository.py`
 - `src/backend/repository/appointment_repository.py`
 - `src/backend/gateway/document_gateway.py`
