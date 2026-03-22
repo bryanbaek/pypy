@@ -10,7 +10,7 @@ Current integrations
 
 OpenAI gateway configuration
 - `OPENAI_API_KEY` (required)
-- `OPENAI_MODEL` (required by the gateway; repo defaults set this to `gpt-5.4-mini`)
+- `OPENAI_MODEL` (required)
 - `OPENAI_BASE_URL` (optional; for compatible endpoints)
 - `OPENAI_TIMEOUT_S` (default `30`)
 - `OPENAI_MAX_RETRIES` (default `2`)
