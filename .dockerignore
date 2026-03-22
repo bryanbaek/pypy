@@ -47,6 +47,7 @@ venv.bak/
 README.md
 *.md
 docs/
+!README.md
 
 # Docker
 Dockerfile

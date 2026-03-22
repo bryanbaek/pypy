@@ -30,10 +30,16 @@ Install dependencies with your preferred toolchain. If you use `uv`:
 
 ```bash
 uv sync
-uv run uvicorn src.backend.web.rest.main:app --reload
+uv run uvicorn src.backend.main:app --reload
 ```
 
-The included FastAPI app starts from `src/backend/web/rest/main.py`.
+To run the same application in Docker:
+
+```bash
+docker compose up --build
+```
+
+The included FastAPI app starts from `src/backend/main.py`.
 
 ## Verify
 
@@ -45,7 +51,7 @@ just test
 ```
 
 `just lint` runs `uv run ruff check .` followed by `uv run ty check`.
-`just test` runs `uv run pytest tests`.
+`just test` runs `uv run pytest`, which includes colocated `*_test.py` modules under `src/`.
 
 ## Development
 
@@ -53,6 +59,7 @@ For repo checks during development, use `just lint` and `just test` after `uv sy
 
 The main files to inspect while adapting the template are:
 
+- `src/backend/main.py`
 - `src/backend/core/document_workflow.py`
 - `src/backend/core/appointment_workflow.py`
 - `src/backend/controller/document_controller.py`
@@ -63,10 +70,9 @@ The main files to inspect while adapting the template are:
 - `src/backend/gateway/appointment_gateway.py`
 - `src/backend/handlers/document_handlers.py`
 - `src/backend/handlers/appointment_handlers.py`
-- `tests/test_core_document_workflow.py`
-- `tests/test_core_workflow.py`
-- `tests/test_backend_document_workflow.py`
-- `tests/test_backend_appointment_workflow.py`
+- `src/backend/main_test.py`
+- `src/backend/core/document_workflow_test.py`
+- `src/backend/core/appointment_workflow_test.py`
 
 ## Notes
 
