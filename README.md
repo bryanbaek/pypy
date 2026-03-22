@@ -6,10 +6,9 @@ This repository is a reusable Python/FastAPI template with a small document CRUD
 
 The template demonstrates a single document flow across the backend layers in `src/backend`:
 
-- `src/backend/core`: input normalization for the sample document payload.
+- `src/backend/controller`: workflow orchestration plus input normalization for the sample document payload.
 - `src/backend/repository`: persistence helpers for `get`, `write` (create-or-update), and `delete`.
 - `src/backend/gateway`: connection-aware delegation into the repository layer.
-- `src/backend/controller`: workflow orchestration that applies core normalization before writes.
 - `src/backend/handlers`: request-payload translation plus a small sample artifact written during a successful document write.
 - `src/backend/db/postgres.py`: minimal database wrapper helpers for the same document sample.
 
@@ -23,6 +22,7 @@ The default sample supports three basic operations:
 - `delete_document(document_id)`
 
 `write_document` uses create-or-update semantics so the same sample covers both initial creation and later replacement.
+The controller normalizes document ids and titles before delegating to the gateway and repository layers.
 
 ## Run
 
@@ -60,10 +60,10 @@ For repo checks during development, use `just lint` and `just test` after `uv sy
 The main files to inspect while adapting the template are:
 
 - `src/backend/main.py`
-- `src/backend/core/document_workflow.py`
-- `src/backend/core/appointment_workflow.py`
 - `src/backend/controller/document_controller.py`
+- `src/backend/controller/document_controller_test.py`
 - `src/backend/controller/appointment_controller.py`
+- `src/backend/controller/appointment_controller_test.py`
 - `src/backend/repository/document_repository.py`
 - `src/backend/repository/appointment_repository.py`
 - `src/backend/gateway/document_gateway.py`
@@ -71,8 +71,6 @@ The main files to inspect while adapting the template are:
 - `src/backend/handlers/document_handlers.py`
 - `src/backend/handlers/appointment_handlers.py`
 - `src/backend/main_test.py`
-- `src/backend/core/document_workflow_test.py`
-- `src/backend/core/appointment_workflow_test.py`
 
 ## Notes
 
