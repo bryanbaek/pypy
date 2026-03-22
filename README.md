@@ -10,7 +10,7 @@ The template demonstrates a single document flow across the backend layers in `s
 - `src/backend/repository`: persistence helpers for `get`, `write` (create-or-update), and `delete`.
 - `src/backend/gateway`: connection-aware delegation into the repository layer.
 - `src/backend/handlers`: request-payload translation plus a small sample artifact written during a successful document write.
-- `src/backend/db/postgres.py`: minimal database wrapper helpers for the same document sample.
+- `src/backend/db/postgres.py`: repository-owned Postgres bootstrap helpers and the adjacent `init-db.sql` schema used for the sample tables plus durable workflow state storage.
 
 
 ## Sample Operations
@@ -41,6 +41,36 @@ docker compose up --build
 
 The included FastAPI app starts from `src/backend/main.py`.
 
+## Postgres Bootstrap
+
+The checked-in bootstrap script lives at `src/backend/db/init-db.sql`.
+It creates the sample `documents` and `appointments` tables expected by the repository layer, plus the durable workflow tables `workflow_state_store` and `workflow_state_transitions`.
+The adjacent `src/backend/db/postgres.py` module points to the bootstrap asset from the Python side without wiring new runtime behavior into the template.
+
+Apply the schema to an existing local Postgres database with:
+
+```bash
+psql "$DATABASE_URL" -f src/backend/db/init-db.sql
+```
+
+For Docker-based startup, mount the same file into the official Postgres entrypoint directory.
+The current `docker-compose.yaml` only starts the FastAPI app, so add a Postgres service with a volume such as:
+
+```yaml
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: pypy
+      POSTGRES_USER: pypy
+      POSTGRES_PASSWORD: pypy
+    volumes:
+      - ./src/backend/db/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+```
+
+The official Postgres image applies files in `/docker-entrypoint-initdb.d/` only when it initializes a fresh data directory.
+If you are reusing an existing local volume, rerun the `psql` command above instead.
+
 ## Verify
 
 After syncing dependencies, run the repository verification commands from the repo root:
@@ -60,6 +90,8 @@ For repo checks during development, use `just lint` and `just test` after `uv sy
 The main files to inspect while adapting the template are:
 
 - `src/backend/main.py`
+- `src/backend/db/postgres.py`
+- `src/backend/db/init-db.sql`
 - `src/backend/controller/document_controller.py`
 - `src/backend/controller/document_controller_test.py`
 - `src/backend/controller/appointment_controller.py`
