@@ -159,6 +159,12 @@ Apply the schema to an existing local Postgres database with:
 psql "$DATABASE_URL" -f src/backend/db/init-db.sql
 ```
 
+## Deployment Notes
+
+- If you protect `/api/*` with HTTP Basic Auth at nginx, treat it as a Phase 1 single-operator control only. Basic Auth sends the credential on every request, so keep it behind TLS termination, do not reuse it anywhere else, and rotate different credentials for `test` and `production`.
+- Treat `src/backend/db/init-db.sql` as additive bootstrap SQL, not a general migration scratchpad. Any schema change in that file must remain additive and idempotent; destructive or one-way changes belong in a separate migration or manual runbook step.
+- Keep `test` and `production` nginx configs rendered from the same template with environment-specific values substituted in, such as domains, upstream addresses, TLS certificate paths, and Basic Auth files. Avoid hand-maintained divergence so `test` stays a reliable proxy for `production`.
+
 ## Verify
 
 After syncing dependencies, run the repository verification commands from the repo root:

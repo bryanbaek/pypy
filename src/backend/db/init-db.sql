@@ -1,4 +1,14 @@
 -- Bootstrap the template's sample CRUD tables plus a durable workflow state store.
+--
+-- CONTRACT:
+-- - Keep this file strictly additive and idempotent.
+-- - Allowed patterns here are backward-compatible DDL such as CREATE ... IF NOT EXISTS,
+--   CREATE OR REPLACE FUNCTION, and DROP TRIGGER IF EXISTS immediately followed by
+--   CREATE TRIGGER so trigger definitions can be refreshed safely.
+-- - Do not add DROP TABLE, DROP COLUMN, ALTER COLUMN, TRUNCATE, or other destructive
+--   schema changes to this bootstrap asset.
+-- - Put destructive or one-way schema changes in a separate migration or manual runbook
+--   step instead of this file.
 
 BEGIN;
 

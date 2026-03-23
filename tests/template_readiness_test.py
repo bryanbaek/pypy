@@ -54,6 +54,23 @@ def test_readme_documents_template_bootstrap_flow() -> None:
     )
 
 
+def test_readme_documents_deployment_guardrails() -> None:
+    readme = _read("README.md")
+
+    _assert_contains_all(
+        readme,
+        (
+            "## Deployment Notes",
+            "`/api/*`",
+            "HTTP Basic Auth",
+            "rotate different credentials for `test` and `production`",
+            "must remain additive and idempotent",
+            "same template with environment-specific values substituted in",
+        ),
+        label="README.md",
+    )
+
+
 def test_template_readiness_workflow_runs_documented_entrypoints() -> None:
     workflow = _read(".github/workflows/template-readiness.yml")
 
