@@ -11,6 +11,7 @@ dependencies = [
     "fastapi>=0.115.2",
     "uvicorn>=0.31.1",
     "openai>=1.51.2",
+    "plaid-python>=38.1.0",
     "groq>=0.11.0",
     "google-generativeai>=0.8.3",
     "python-dotenv>=1.0.1",
