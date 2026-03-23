@@ -61,8 +61,6 @@ The default FastAPI app in `src/backend/main.py` mounts `/`, `/health`, `/jobs/{
 
 The sample backend includes three small starter flows:
 
-- Document CRUD example: `src/backend/controller/document_controller.py`, `src/backend/handlers/document_handlers.py`, and `src/backend/repository/document_repository.py`
-- Appointment CRUD example: `src/backend/controller/appointment_controller.py`, `src/backend/handlers/appointment_handlers.py`, and `src/backend/repository/appointment_repository.py`
 - Job workflow example: `src/backend/controller/job_controller.py` and `src/backend/handlers/job_handlers.py`
 
 `write_document` keeps create-or-update semantics so a single starter flow covers both initial creation and replacement. The appointment sample shows payload normalization, time-range validation, and conflict checks.
@@ -137,7 +135,7 @@ The frontend service runs the starter app in `src/frontend`, the backend service
 If you change the published backend URL, update `VITE_BACKEND_URL` so the frontend starter still points at the FastAPI service.
 
 The Postgres data directory lives in the named `postgres-data` volume.
-That means `docker compose stop`, `docker compose start`, and `docker compose down` preserve starter document data, appointment data, and workflow state.
+That means `docker compose stop`, `docker compose start`, and `docker compose down` preserve starter and workflow state.
 Run `docker compose down -v` only when you want to remove the named volume and force Postgres to initialize a fresh database on the next `docker compose up`.
 
 ## Postgres Bootstrap
@@ -177,17 +175,12 @@ Use these files first while adapting the template:
 - `src/backend/main.py`
 - `src/backend/main_test.py`
 - `src/backend/controller/README.md`
-- `src/backend/controller/document_controller.py`
-- `src/backend/controller/appointment_controller.py`
 - `src/backend/controller/job_controller.py`
 - `src/backend/gateway/README.md`
 - `src/backend/gateway/llm_gateway.py`
 - `src/backend/handlers/README.md`
-- `src/backend/handlers/document_handlers.py`
-- `src/backend/handlers/appointment_handlers.py`
 - `src/backend/handlers/job_handlers.py`
 - `src/backend/repository/README.md`
-- `src/backend/repository/document_repository.py`
 - `src/backend/repository/appointment_repository.py`
 - `src/backend/db/postgres.py`
 - `src/backend/db/init-db.sql`

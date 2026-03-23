@@ -5,8 +5,6 @@ Purpose
 - Avoid business logic and direct database mutations in handlers.
 
 Starter surfaces in this template
-- `document_handlers.py` — sample document CRUD payload translation plus a starter artifact write on successful document updates.
-- `appointment_handlers.py` — sample appointment payload parsing and response shaping.
 - `job_handlers.py` — mounted FastAPI router for sample workflow job detail and resume actions.
 - The document and appointment files are starter examples. They are not mounted by default in `src/backend/main.py`, so you can replace them with product-specific routes without first unwinding live runtime wiring.
 - `job_handlers.py` is mounted by default to expose `/jobs/{job_id}/detail` and `/jobs/{job_id}/resume`.
