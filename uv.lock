@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -587,6 +587,15 @@ wheels = [
 ]
 
 [[package]]
+name = "nulltype"
+version = "2.3.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2f/ce/92289851364b7f816a839c8064aac06c01f3a3ecf33ab04adf9d0a0ab66a/nulltype-2.3.1.zip", hash = "sha256:64aa3cb2ab5e904d1b37175b9b922bea268c13f9ce32e3d373313150ab5ef272", size = 20119, upload-time = "2018-06-03T22:01:01.45Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/00/0f/47dde1a3cceac9858da0bfb92d2279bf5f993ed075b72983e92efc297db3/nulltype-2.3.1-py2.py3-none-any.whl", hash = "sha256:16ae565745118e37e0558441f5821c76351d8c3a789640b5bca277cf65b2271b", size = 11054, upload-time = "2018-06-03T22:01:04.03Z" },
+]
+
+[[package]]
 name = "openai"
 version = "1.95.1"
 source = { registry = "https://pypi.org/simple" }
@@ -622,6 +631,17 @@ sdist = { url = "https://files.pythonhosted.org/packages/ca/bc/f35b8446f4531a7cb
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cc/20/ff623b09d963f88bfde16306a54e12ee5ea43e9b597108672ff3a408aad6/pathspec-0.12.1-py3-none-any.whl", hash = "sha256:a0d503e138a4c123b27490a4f7beda6a01c6f288df0e4a8b79c7eb0dc7b4cc08", size = 31191, upload-time = "2023-12-10T22:30:43.14Z" },
 ]
+
+[[package]]
+name = "plaid-python"
+version = "38.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "nulltype" },
+    { name = "python-dateutil" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c7/1d/fa7ee92973930438e908886d6e2035fcd29589652aebd90fc28ee9e894c2/plaid_python-38.4.0.tar.gz", hash = "sha256:cdd56262a865eb58d424b3f85b9e41ca5b79e0f0aec71e968afe9aa46d9f84b4", size = 1184149, upload-time = "2026-03-05T21:05:24.698Z" }
 
 [[package]]
 name = "platformdirs"
@@ -848,6 +868,7 @@ dependencies = [
     { name = "motor" },
     { name = "mypy" },
     { name = "openai" },
+    { name = "plaid-python" },
     { name = "pre-commit" },
     { name = "pydantic" },
     { name = "pylint" },
@@ -873,6 +894,7 @@ requires-dist = [
     { name = "motor", specifier = ">=3.3.2" },
     { name = "mypy", specifier = ">=1.11.2" },
     { name = "openai", specifier = ">=1.51.2" },
+    { name = "plaid-python", specifier = ">=38.1.0" },
     { name = "pre-commit", specifier = ">=4.0.1" },
     { name = "pydantic", specifier = ">=2.9.2" },
     { name = "pylint", specifier = ">=3.3.1" },

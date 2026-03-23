@@ -22,6 +22,7 @@ cp env.example .env
 
 - `docker-compose.yaml` and the local Postgres bootstrap rely on `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `DATABASE_URL`, `BACKEND_PORT`, `FRONTEND_PORT`, and `VITE_BACKEND_URL`.
 - If you keep the optional OpenAI starter integration in `src/backend/gateway/llm_gateway.py`, also set `OPENAI_API_KEY` and `OPENAI_MODEL`.
+- If you use the Plaid gateway in `src/backend/gateway/plaid`, set `PLAID_CLIENT_ID`, `PLAID_SECRET`, and `PLAID_ENV`. Optionally override the Plaid API version header with `PLAID_API_VERSION`.
 
 3. Verify the template before you customize it.
 
@@ -53,7 +54,7 @@ The template includes a lightweight frontend starter in `src/frontend` plus star
 
 - `src/frontend`: Bun + Vite + TypeScript demo page. Optional starter UI.
 - `src/backend/controller`: sample document, appointment, and job orchestration. Keep the controller boundary, replace the sample rules.
-- `src/backend/gateway`: outbound integrations. `llm_gateway.py` is an optional starter integration, not a mandatory runtime dependency.
+- `src/backend/gateway`: outbound integrations. `llm_gateway.py` is an optional starter integration, and `plaid/` adds a minimal Plaid wrapper for Link, Auth, Accounts, Item, and Transactions Sync flows.
 - `src/backend/repository`: Postgres read/write helpers for the sample document and appointment flows.
 - `src/backend/handlers`: thin request/response helpers around the sample flows plus a mounted sample job workflow router.
 - `src/backend/db/postgres.py`: bootstrap helpers for checked-in database assets.
@@ -182,6 +183,7 @@ Use these files first while adapting the template:
 - `src/backend/controller/job_controller.py`
 - `src/backend/gateway/README.md`
 - `src/backend/gateway/llm_gateway.py`
+- `src/backend/gateway/plaid/client.py`
 - `src/backend/handlers/README.md`
 - `src/backend/handlers/job_handlers.py`
 - `src/backend/repository/README.md`
