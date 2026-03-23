@@ -2,6 +2,8 @@
 
 This repository is a reusable FastAPI template with a small set of starter examples. The checked-in document and appointment flows are intentionally sample code, not required product logic. A lightweight Bun + Vite + TypeScript page in `src/frontend` is included for browser-facing bootstrap work.
 
+For a repository-aligned example of adapting this template into a personal finance tracker, see `FINANCE_APP_IMPLEMENTATION_PLAN.md`.
+
 ## Before Using This As A Template
 
 Use the starter code as a verification target before you replace it with your own domain:
@@ -35,6 +37,7 @@ just test
 
 - `uv sync` installs the backend toolchain declared in `pyproject.toml`.
 - `bun install`, `bun run dev`, and `bun run build` come from `src/frontend/package.json`.
+- Run `docker compose up --build` from the repo root after copying `env.example` to `.env`.
 - The `Template Readiness` GitHub Actions workflow runs the same `uv sync`, `just lint`, and `just test` entrypoints on pull requests to `main` and via manual dispatch.
 
 4. Replace starter examples only after the repository is green.
@@ -42,6 +45,7 @@ just test
 - Swap the sample document and appointment modules for your own domain behavior while keeping the layer seams.
 - Update `src/frontend/src/main.ts` after your own backend routes and URLs are in place.
 - Keep `src/backend/main.py` minimal beyond the mounted sample job workflow routes until you decide which product routes should actually be mounted by default.
+- The minimal bootstrap contract only mounts `/` and `/health` for smoke checks, even though the checked-in template also includes the sample job router until you replace it.
 
 ## Starter Layout
 
