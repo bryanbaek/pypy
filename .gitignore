@@ -9,6 +9,3 @@ venv/
 
 # VS Code configuration directory
 .vscode/
-
-# Github configuration directory
-.github/

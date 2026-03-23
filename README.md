@@ -1,64 +1,110 @@
 # FastAPI Template
 
-This repository is a reusable Python/FastAPI template with a small document CRUD sample. The default example is intentionally domain-neutral so you can copy the layer boundaries without inheriting business-specific rules. A minimal Bun + Vite + TypeScript frontend starter also lives alongside the backend so the template includes a simple browser-facing demo surface.
+This repository is a reusable FastAPI template with a small set of starter examples. The checked-in document and appointment flows are intentionally sample code, not required product logic. A lightweight Bun + Vite + TypeScript page in `src/frontend` is included for browser-facing bootstrap work.
 
-## Sample Layout
+## Before Using This As A Template
 
-The template includes a lightweight frontend starter in `src/frontend` plus the existing sample workflows in `src/backend`:
+Use the starter code as a verification target before you replace it with your own domain:
 
-- `src/frontend`: Bun + Vite + TypeScript demo page for browser-facing starter work.
-- `src/backend/controller`: workflow orchestration plus input normalization for the sample document payload.
-- `src/backend/repository`: canonical Postgres read/write helpers for the sample document and appointment CRUD flows.
-- `src/backend/gateway`: connection-aware delegation into the repository package rather than issuing SQL directly.
-- `src/backend/handlers`: request-payload translation plus a small sample artifact written during a successful document write.
-- `src/backend/db/postgres.py`: repository-owned Postgres bootstrap helpers and the adjacent `init-db.sql` schema used for the sample tables plus durable workflow state storage.
+1. Review the starter surfaces you plan to keep versus replace.
 
+- Keep the layer boundaries in `src/backend/controller`, `src/backend/gateway`, `src/backend/repository`, and `src/backend/handlers`.
+- Treat the sample document and appointment flows in those directories as starter examples.
+- Treat `src/frontend` as an optional demo UI that proves the backend/frontend wiring, not as required long-term product code.
 
-## Sample Operations
+2. Copy the example environment file and decide which integrations still belong in your project.
 
-The default sample supports three basic operations:
+```bash
+cp env.example .env
+```
 
-- `get_document(document_id)`
-- `write_document(document_id, title, content)`
-- `delete_document(document_id)`
+- `docker-compose.yaml` and the local Postgres bootstrap rely on `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `DATABASE_URL`, `BACKEND_PORT`, `FRONTEND_PORT`, and `VITE_BACKEND_URL`.
+- If you keep the optional OpenAI starter integration in `src/backend/gateway/llm_gateway.py`, also set `OPENAI_API_KEY` and `OPENAI_MODEL`.
 
-`write_document` uses create-or-update semantics so the same sample covers both initial creation and later replacement.
-The controller normalizes document ids and titles before delegating to the gateway and repository layers, and the same layering applies to the sample appointment flow.
+3. Verify the template before you customize it.
+
+```bash
+uv sync
+cd src/frontend
+bun install
+cd ../..
+docker compose up --build
+just lint
+just test
+```
+
+- `uv sync` installs the backend toolchain declared in `pyproject.toml`.
+- `bun install`, `bun run dev`, and `bun run build` come from `src/frontend/package.json`.
+- The `Template Readiness` GitHub Actions workflow runs the same `uv sync`, `just lint`, and `just test` entrypoints on pull requests to `main` and via manual dispatch.
+
+4. Replace starter examples only after the repository is green.
+
+- Swap the sample document and appointment modules for your own domain behavior while keeping the layer seams.
+- Update `src/frontend/src/main.ts` after your own backend routes and URLs are in place.
+- Keep `src/backend/main.py` minimal until you decide which product routes should actually be mounted by default.
+
+## Starter Layout
+
+The template includes a lightweight frontend starter in `src/frontend` plus starter backend layers in `src/backend`:
+
+- `src/frontend`: Bun + Vite + TypeScript demo page. Optional starter UI.
+- `src/backend/controller`: sample document and appointment orchestration. Keep the controller boundary, replace the sample rules.
+- `src/backend/gateway`: outbound integrations. `llm_gateway.py` is an optional starter integration, not a mandatory runtime dependency.
+- `src/backend/repository`: Postgres read/write helpers for the sample document and appointment flows.
+- `src/backend/handlers`: thin request/response helpers around the sample flows.
+- `src/backend/db/postgres.py`: bootstrap helpers for checked-in database assets.
+- `src/backend/db/init-db.sql`: sample tables plus durable workflow-state tables used by local Postgres bootstrap.
+
+The default FastAPI app in `src/backend/main.py` only mounts `/` and `/health`. The document and appointment CRUD modules are starter examples that are unit tested in place, but they are not wired into live routes until you choose how to expose them.
+
+## Starter Examples
+
+The sample backend includes two small starter flows:
+
+- Document CRUD example: `src/backend/controller/document_controller.py`, `src/backend/handlers/document_handlers.py`, and `src/backend/repository/document_repository.py`
+- Appointment CRUD example: `src/backend/controller/appointment_controller.py`, `src/backend/handlers/appointment_handlers.py`, and `src/backend/repository/appointment_repository.py`
+
+`write_document` keeps create-or-update semantics so a single starter flow covers both initial creation and replacement. The appointment sample shows payload normalization, time-range validation, and conflict checks.
 
 ## Frontend Demo
 
-The frontend sample lives in `src/frontend`. It is intentionally lightweight and domain-neutral: a single Bun + Vite + TypeScript page that gives contributors a concrete place to start UI work without replacing the existing FastAPI document workflow.
+The frontend starter lives in `src/frontend`. It is intentionally small: a single Bun + Vite + TypeScript page that links to the FastAPI root and health endpoints. Replace it after the template bootstrap checks pass and your own product routes exist.
 
 ## Run
 
 ### Backend
 
-Install backend dependencies with your preferred Python toolchain. If you use `uv`:
+Install backend dependencies from the repo root with:
 
 ```bash
 uv sync
+```
+
+Start the FastAPI app with:
+
+```bash
 uv run uvicorn src.backend.main:app --reload
 ```
 
-The included FastAPI app starts from `src/backend/main.py`.
+The included FastAPI app starts from `src/backend/main.py` and exposes `/` plus `/health`.
 
 ### Frontend
 
-The frontend starter uses Bun as its package manager/runtime. After installing Bun locally, install frontend dependencies from the repo root:
+The frontend starter uses Bun. Install dependencies from the repo root with:
 
 ```bash
 cd src/frontend
 bun install
 ```
 
-Start the Vite development server:
+Start the Vite development server with:
 
 ```bash
 cd src/frontend
 bun run dev
 ```
 
-Then open `http://localhost:5173` in a browser. The demo page links to the FastAPI sample using `VITE_BACKEND_URL`, which defaults to `http://localhost:8000` for local development.
+Then open `http://localhost:5173` in a browser. The demo page links to the FastAPI starter using `VITE_BACKEND_URL`, which defaults to `http://localhost:8000` for local development.
 
 Create a production build with:
 
@@ -71,7 +117,7 @@ The built assets are written to `src/frontend/dist/`.
 
 ### Docker Compose
 
-For the full local stack, copy `env.example` to `.env`, adjust any ports or database credentials you need, and then start the services:
+For the full local stack, copy `env.example` to `.env`, adjust any ports or credentials you need, and then start the services:
 
 ```bash
 cp env.example .env
@@ -84,23 +130,23 @@ By default, the compose stack exposes:
 - Bun/Vite frontend on `http://localhost:5173`
 - Postgres on `localhost:5432`
 
-`docker-compose.yaml` reads its local database and app settings from the variables you copied from `env.example` into `.env`, including `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `BACKEND_PORT`, `FRONTEND_PORT`, and `VITE_BACKEND_URL`.
-The frontend service runs the existing app in `src/frontend`, the backend service continues to run `src.backend.main:app`, and the Postgres service mounts the bootstrap SQL from `src/backend/db/init-db.sql`.
-If you change the published backend URL, update `VITE_BACKEND_URL` so the frontend demo links still point at the FastAPI service.
+`docker-compose.yaml` reads its local database and app settings from the variables copied from `env.example` into `.env`, including `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `BACKEND_PORT`, `FRONTEND_PORT`, and `VITE_BACKEND_URL`.
+
+The frontend service runs the starter app in `src/frontend`, the backend service runs `src.backend.main:app`, and the Postgres service mounts the bootstrap SQL from `src/backend/db/init-db.sql`.
+If you change the published backend URL, update `VITE_BACKEND_URL` so the frontend starter still points at the FastAPI service.
 
 The Postgres data directory lives in the named `postgres-data` volume.
-That means `docker compose stop`, `docker compose start`, and `docker compose down` preserve your sample document data, appointment data, and workflow state.
+That means `docker compose stop`, `docker compose start`, and `docker compose down` preserve starter document data, appointment data, and workflow state.
 Run `docker compose down -v` only when you want to remove the named volume and force Postgres to initialize a fresh database on the next `docker compose up`.
 
 ## Postgres Bootstrap
 
 The checked-in bootstrap script lives at `src/backend/db/init-db.sql`.
-It creates the sample `documents` and `appointments` tables expected by the repository layer, plus the durable workflow tables `workflow_state_store` and `workflow_state_transitions`.
-All workflow-specific Postgres CRUD reads and writes live in `src/backend/repository/document_repository.py` and `src/backend/repository/appointment_repository.py`.
-The adjacent `src/backend/db/postgres.py` module only points to the bootstrap asset from the Python side without owning sample-specific DAO behavior.
+It creates the sample `documents` and `appointments` tables expected by the starter repository modules, plus the durable workflow tables `workflow_state_store` and `workflow_state_transitions`.
+The Python helper in `src/backend/db/postgres.py` only reads that bootstrap asset; it does not own sample-specific query logic.
 
-When you start the compose stack, `docker-compose.yaml` mounts that same SQL file into the official Postgres entrypoint directory at `/docker-entrypoint-initdb.d/init-db.sql`.
-The official Postgres image applies files from that directory only when it initializes a fresh data directory, so the named `postgres-data` volume preserves both schema and data across container recreation.
+When you start the compose stack, `docker-compose.yaml` mounts that SQL file into the official Postgres entrypoint directory at `/docker-entrypoint-initdb.d/init-db.sql`.
+The Postgres image applies files from that directory only when it initializes a fresh data directory, so the named `postgres-data` volume preserves both schema and data across container recreation.
 If you need the bootstrap script to run again after changing the schema, remove the volume with `docker compose down -v` before starting the stack again.
 
 Apply the schema to an existing local Postgres database with:
@@ -119,36 +165,34 @@ just test
 ```
 
 `just lint` runs `uv run ruff check .` followed by `uv run ty check`.
-`just test` runs `uv run pytest`, which includes colocated `*_test.py` modules under `src/`.
-Pull requests to `main` and pushes to `main` run the same lint and test commands in GitHub Actions.
+`just test` runs `uv run pytest`, which includes colocated `*_test.py` modules under `src/` plus any tests under `tests/`.
+
+The `Template Readiness` GitHub Actions workflow runs `uv sync`, `just lint`, and `just test` on pull requests to `main` and via manual dispatch. That workflow also validates that this README, `Justfile`, `pyproject.toml`, `docker-compose.yaml`, `env.example`, and the backend layer README files stay aligned.
 
 ## Development
 
-For repo checks during development, use `just lint` and `just test` after `uv sync`.
+Use these files first while adapting the template:
 
-The main files to inspect while adapting the template are:
-
-- `src/frontend/package.json`
-- `src/frontend/index.html`
-- `src/frontend/src/main.ts`
-- `src/frontend/src/style.css`
 - `src/backend/main.py`
-- `src/backend/db/postgres.py`
-- `src/backend/db/init-db.sql`
+- `src/backend/main_test.py`
+- `src/backend/controller/README.md`
 - `src/backend/controller/document_controller.py`
-- `src/backend/controller/document_controller_test.py`
 - `src/backend/controller/appointment_controller.py`
-- `src/backend/controller/appointment_controller_test.py`
-- `src/backend/repository/__init__.py`
-- `src/backend/repository/document_repository.py`
-- `src/backend/repository/appointment_repository.py`
-- `src/backend/gateway/document_gateway.py`
-- `src/backend/gateway/appointment_gateway.py`
+- `src/backend/gateway/README.md`
+- `src/backend/gateway/llm_gateway.py`
+- `src/backend/handlers/README.md`
 - `src/backend/handlers/document_handlers.py`
 - `src/backend/handlers/appointment_handlers.py`
-- `src/backend/main_test.py`
+- `src/backend/repository/README.md`
+- `src/backend/repository/document_repository.py`
+- `src/backend/repository/appointment_repository.py`
+- `src/backend/db/postgres.py`
+- `src/backend/db/init-db.sql`
+- `src/frontend/package.json`
+- `src/frontend/src/main.ts`
+- `src/frontend/src/style.css`
 
 ## Notes
 
-- The sample is deliberately small and not production-ready.
-- The repository still includes infrastructure scaffolding such as Docker, GitHub Actions, and FastAPI app wiring so you can build on top of the template.
+- The sample flows are deliberately small and are meant to be replaced.
+- The repository keeps Docker, GitHub Actions, FastAPI app wiring, and starter tests so new projects can bootstrap from a working baseline.
