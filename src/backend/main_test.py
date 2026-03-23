@@ -14,6 +14,8 @@ def test_create_app_registers_expected_routes() -> None:
 
     assert "/" in route_paths
     assert "/health" in route_paths
+    assert "/jobs/{job_id}/detail" in route_paths
+    assert "/jobs/{job_id}/resume" in route_paths
 
 
 def test_root_endpoint_returns_template_message() -> None:

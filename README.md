@@ -41,28 +41,29 @@ just test
 
 - Swap the sample document and appointment modules for your own domain behavior while keeping the layer seams.
 - Update `src/frontend/src/main.ts` after your own backend routes and URLs are in place.
-- Keep `src/backend/main.py` minimal until you decide which product routes should actually be mounted by default.
+- Keep `src/backend/main.py` minimal beyond the mounted sample job workflow routes until you decide which product routes should actually be mounted by default.
 
 ## Starter Layout
 
 The template includes a lightweight frontend starter in `src/frontend` plus starter backend layers in `src/backend`:
 
 - `src/frontend`: Bun + Vite + TypeScript demo page. Optional starter UI.
-- `src/backend/controller`: sample document and appointment orchestration. Keep the controller boundary, replace the sample rules.
+- `src/backend/controller`: sample document, appointment, and job orchestration. Keep the controller boundary, replace the sample rules.
 - `src/backend/gateway`: outbound integrations. `llm_gateway.py` is an optional starter integration, not a mandatory runtime dependency.
 - `src/backend/repository`: Postgres read/write helpers for the sample document and appointment flows.
-- `src/backend/handlers`: thin request/response helpers around the sample flows.
+- `src/backend/handlers`: thin request/response helpers around the sample flows plus a mounted sample job workflow router.
 - `src/backend/db/postgres.py`: bootstrap helpers for checked-in database assets.
 - `src/backend/db/init-db.sql`: sample tables plus durable workflow-state tables used by local Postgres bootstrap.
 
-The default FastAPI app in `src/backend/main.py` only mounts `/` and `/health`. The document and appointment CRUD modules are starter examples that are unit tested in place, but they are not wired into live routes until you choose how to expose them.
+The default FastAPI app in `src/backend/main.py` mounts `/`, `/health`, `/jobs/{job_id}/detail`, and `/jobs/{job_id}/resume`. The document and appointment CRUD modules are starter examples that are unit tested in place, but they are not wired into live routes until you choose how to expose them.
 
 ## Starter Examples
 
-The sample backend includes two small starter flows:
+The sample backend includes three small starter flows:
 
 - Document CRUD example: `src/backend/controller/document_controller.py`, `src/backend/handlers/document_handlers.py`, and `src/backend/repository/document_repository.py`
 - Appointment CRUD example: `src/backend/controller/appointment_controller.py`, `src/backend/handlers/appointment_handlers.py`, and `src/backend/repository/appointment_repository.py`
+- Job workflow example: `src/backend/controller/job_controller.py` and `src/backend/handlers/job_handlers.py`
 
 `write_document` keeps create-or-update semantics so a single starter flow covers both initial creation and replacement. The appointment sample shows payload normalization, time-range validation, and conflict checks.
 
@@ -86,7 +87,7 @@ Start the FastAPI app with:
 uv run uvicorn src.backend.main:app --reload
 ```
 
-The included FastAPI app starts from `src/backend/main.py` and exposes `/` plus `/health`.
+The included FastAPI app starts from `src/backend/main.py` and exposes `/`, `/health`, `/jobs/{job_id}/detail`, and `/jobs/{job_id}/resume`.
 
 ### Frontend
 
@@ -178,11 +179,13 @@ Use these files first while adapting the template:
 - `src/backend/controller/README.md`
 - `src/backend/controller/document_controller.py`
 - `src/backend/controller/appointment_controller.py`
+- `src/backend/controller/job_controller.py`
 - `src/backend/gateway/README.md`
 - `src/backend/gateway/llm_gateway.py`
 - `src/backend/handlers/README.md`
 - `src/backend/handlers/document_handlers.py`
 - `src/backend/handlers/appointment_handlers.py`
+- `src/backend/handlers/job_handlers.py`
 - `src/backend/repository/README.md`
 - `src/backend/repository/document_repository.py`
 - `src/backend/repository/appointment_repository.py`
