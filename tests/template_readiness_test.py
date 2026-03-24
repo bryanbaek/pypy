@@ -54,6 +54,23 @@ def test_readme_documents_template_bootstrap_flow() -> None:
     )
 
 
+def test_readme_documents_yolo_ticket_marker() -> None:
+    readme = _read("README.md")
+
+    _assert_contains_all(
+        readme,
+        (
+            "## berry-pm YOLO Auto-Merge",
+            "`berry:yolo`",
+            "`ticket_marker`",
+            "`pull_request_labels`",
+            ".github/workflows/berry-pm-yolo-auto-merge.yml",
+            "same-repo PRs to `main`",
+        ),
+        label="README.md",
+    )
+
+
 def test_template_readiness_workflow_runs_documented_entrypoints() -> None:
     workflow = _read(".github/workflows/template-readiness.yml")
 
@@ -70,6 +87,23 @@ def test_template_readiness_workflow_runs_documented_entrypoints() -> None:
             "just test",
         ),
         label=".github/workflows/template-readiness.yml",
+    )
+
+
+def test_yolo_auto_merge_workflow_targets_marked_prs() -> None:
+    workflow = _read(".github/workflows/berry-pm-yolo-auto-merge.yml")
+
+    _assert_contains_all(
+        workflow,
+        (
+            "name: berry-pm YOLO auto-merge",
+            "pull_request_target:",
+            'branches: ["main"]',
+            "berry:yolo",
+            "gh pr merge --auto --squash",
+            "gh pr merge --disable-auto",
+        ),
+        label=".github/workflows/berry-pm-yolo-auto-merge.yml",
     )
 
 

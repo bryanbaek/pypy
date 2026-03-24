@@ -10,7 +10,7 @@ from src.backend.controller.job_controller import (
     JobNotFoundError,
     JobNotResumableError,
 )
-from src.backend.models.job import JobDetailDTO
+from src.backend.models.job import JobDetailDTO, YOLO_MARKER
 
 
 class StubJobGateway:
@@ -43,6 +43,17 @@ class StubJobGateway:
                 state_version=5,
                 resume_count=1,
                 can_resume=True,
+            ),
+            "job-yolo-321": JobDetailDTO(
+                job_id="job-yolo-321",
+                workflow_type="pm_tool_workflow",
+                current_state="awaiting_requirements",
+                status="paused",
+                state_version=2,
+                resume_count=0,
+                can_resume=True,
+                last_error="Waiting for YOLO requirements",
+                ticket_marker=YOLO_MARKER,
             ),
         }
         self.requested_ids: list[str] = []
@@ -90,6 +101,8 @@ def test_resume_job_updates_resumable_job_state() -> None:
     assert resumed_job.resume_count == 1
     assert resumed_job.can_resume is True
     assert resumed_job.last_error is None
+    assert resumed_job.ticket_marker is None
+    assert resumed_job.pull_request_labels == []
     assert gateway.saved_jobs == [resumed_job]
 
 
@@ -103,6 +116,29 @@ def test_resume_job_allows_in_progress_jobs() -> None:
     assert resumed_job.state_version == 6
     assert resumed_job.resume_count == 2
     assert resumed_job.can_resume is True
+    assert resumed_job.pull_request_labels == []
+
+
+def test_get_job_detail_returns_yolo_ticket_marker() -> None:
+    gateway = StubJobGateway()
+    controller = JobController(gateway)
+
+    job = asyncio.run(controller.get_job_detail("job-yolo-321"))
+
+    assert job.ticket_marker == YOLO_MARKER
+    assert job.pull_request_labels == []
+
+
+def test_resume_job_propagates_yolo_marker_to_pull_request_labels() -> None:
+    gateway = StubJobGateway()
+    controller = JobController(gateway)
+
+    resumed_job = asyncio.run(controller.resume_job("job-yolo-321"))
+
+    assert resumed_job.current_state == "drafting_pr"
+    assert resumed_job.status == "in_progress"
+    assert resumed_job.ticket_marker == YOLO_MARKER
+    assert resumed_job.pull_request_labels == [YOLO_MARKER]
 
 
 def test_resume_job_rejects_unknown_jobs() -> None:

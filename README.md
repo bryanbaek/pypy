@@ -70,6 +70,23 @@ The sample backend includes three small starter flows:
 
 `write_document` keeps create-or-update semantics so a single starter flow covers both initial creation and replacement. The appointment sample shows payload normalization, time-range validation, and conflict checks.
 
+## berry-pm YOLO Auto-Merge
+
+The sample job workflow includes a single repo-level YOLO marker for berry-pm style ticketing: `berry:yolo`.
+
+Use it this way:
+
+1. Create the berry-pm ticket with `ticket_marker` set to `berry:yolo`.
+2. Let the workflow carry that same marker into PR metadata by copying it into `pull_request_labels` when the ticket reaches PR drafting. In the checked-in sample flow, resuming `job-yolo-321` shows that propagation.
+3. Open the GitHub PR against `main` from a branch in the same repository with the `berry:yolo` label attached. `.github/workflows/berry-pm-yolo-auto-merge.yml` enables squash auto-merge for that PR without waiting for the usual human or AI review handoff.
+
+Safeguards and limitations:
+
+- Normal PRs are unchanged because the workflow only acts on same-repo PRs to `main` that carry the exact `berry:yolo` label.
+- If the `berry:yolo` label is removed, or the PR is converted back to draft, the workflow disables the previously requested auto-merge.
+- berry-pm should be the only automation that applies `berry:yolo`, because that label is the explicit review-bypass marker.
+- GitHub still needs repository settings that allow Actions to enable and complete auto-merge for YOLO PRs, including any ruleset bypass needed for the Actions token to merge without reviewer approval.
+
 ## Frontend Demo
 
 The frontend starter lives in `src/frontend`. It is intentionally small: a single Bun + Vite + TypeScript page that links to the FastAPI root and health endpoints. Replace it after the template bootstrap checks pass and your own product routes exist.

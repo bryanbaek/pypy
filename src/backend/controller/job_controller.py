@@ -2,7 +2,7 @@
 
 from typing import Protocol
 
-from src.backend.models.job import JobDetailDTO
+from src.backend.models.job import JobDetailDTO, YOLO_MARKER
 
 
 class InvalidJobIdError(ValueError):
@@ -26,6 +26,13 @@ def _normalize_job_id(job_id: str) -> str:
 
 def _can_resume(status: str) -> bool:
     return status in {"paused", "in_progress"}
+
+
+def _pull_request_labels_for(job: JobDetailDTO) -> list[str]:
+    labels = list(job.pull_request_labels)
+    if job.ticket_marker == YOLO_MARKER and YOLO_MARKER not in labels:
+        labels.append(YOLO_MARKER)
+    return labels
 
 
 class JobGatewayContract(Protocol):
@@ -86,6 +93,17 @@ def _default_jobs() -> dict[str, JobDetailDTO]:
             resume_count=0,
             can_resume=False,
         ),
+        "job-yolo-321": JobDetailDTO(
+            job_id="job-yolo-321",
+            workflow_type="pm_tool_workflow",
+            current_state="awaiting_requirements",
+            status="paused",
+            state_version=2,
+            resume_count=0,
+            can_resume=True,
+            last_error="Waiting for YOLO requirements",
+            ticket_marker=YOLO_MARKER,
+        ),
     }
 
 
@@ -121,6 +139,7 @@ class JobController:
                 "resume_count": job.resume_count + 1,
                 "can_resume": True,
                 "last_error": None,
+                "pull_request_labels": _pull_request_labels_for(job),
             }
         )
         return await self._gateway.save_job(resumed_job)
