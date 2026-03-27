@@ -8,6 +8,7 @@ from src.backend.controller.job_controller import (
     InvalidJobIdError,
     JobController,
     JobNotFoundError,
+    JobNotReviewableError,
     JobNotResumableError,
 )
 from src.backend.models.job import JobDetailDTO
@@ -24,16 +25,10 @@ class StubJobGateway:
                 state_version=3,
                 resume_count=0,
                 can_resume=True,
+                approval_status="pending",
+                can_approve=True,
+                can_reject=True,
                 last_error="Waiting for product requirements",
-            ),
-            "job-completed-789": JobDetailDTO(
-                job_id="job-completed-789",
-                workflow_type="pm_tool_workflow",
-                current_state="published_summary",
-                status="completed",
-                state_version=8,
-                resume_count=0,
-                can_resume=False,
             ),
             "job-running-456": JobDetailDTO(
                 job_id="job-running-456",
@@ -43,10 +38,24 @@ class StubJobGateway:
                 state_version=5,
                 resume_count=1,
                 can_resume=True,
+                approval_status="approved",
+            ),
+            "job-completed-789": JobDetailDTO(
+                job_id="job-completed-789",
+                workflow_type="pm_tool_workflow",
+                current_state="published_summary",
+                status="completed",
+                state_version=8,
+                resume_count=0,
+                can_resume=False,
+                approval_status="approved",
             ),
         }
         self.requested_ids: list[str] = []
         self.saved_jobs: list[JobDetailDTO] = []
+
+    async def list_jobs(self) -> list[JobDetailDTO]:
+        return [job.model_copy(deep=True) for job in self.jobs.values()]
 
     async def get_job(self, job_id: str) -> JobDetailDTO | None:
         self.requested_ids.append(job_id)
@@ -78,6 +87,22 @@ def test_get_job_detail_rejects_blank_job_ids() -> None:
         asyncio.run(controller.get_job_detail("   "))
 
 
+def test_list_jobs_returns_dashboard_review_flags() -> None:
+    controller = JobController(StubJobGateway())
+
+    jobs = asyncio.run(controller.list_jobs())
+
+    assert [job.job_id for job in jobs] == [
+        "job-paused-123",
+        "job-running-456",
+        "job-completed-789",
+    ]
+    assert jobs[0].can_approve is True
+    assert jobs[0].can_reject is True
+    assert jobs[1].can_approve is False
+    assert jobs[2].can_reject is False
+
+
 def test_resume_job_updates_resumable_job_state() -> None:
     gateway = StubJobGateway()
     controller = JobController(gateway)
@@ -89,6 +114,9 @@ def test_resume_job_updates_resumable_job_state() -> None:
     assert resumed_job.state_version == 4
     assert resumed_job.resume_count == 1
     assert resumed_job.can_resume is True
+    assert resumed_job.approval_status == "approved"
+    assert resumed_job.can_approve is False
+    assert resumed_job.can_reject is False
     assert resumed_job.last_error is None
     assert gateway.saved_jobs == [resumed_job]
 
@@ -103,6 +131,41 @@ def test_resume_job_allows_in_progress_jobs() -> None:
     assert resumed_job.state_version == 6
     assert resumed_job.resume_count == 2
     assert resumed_job.can_resume is True
+    assert resumed_job.approval_status == "approved"
+    assert resumed_job.can_approve is False
+    assert resumed_job.can_reject is False
+
+
+def test_review_job_approve_matches_resume_transition() -> None:
+    review_controller = JobController(StubJobGateway())
+    resume_controller = JobController(StubJobGateway())
+
+    approved_job = asyncio.run(
+        review_controller.review_job("job-paused-123", "approve")
+    )
+    resumed_job = asyncio.run(resume_controller.resume_job("job-paused-123"))
+
+    assert approved_job == resumed_job
+
+
+def test_review_job_reject_updates_job_state() -> None:
+    gateway = StubJobGateway()
+    controller = JobController(gateway)
+
+    rejected_job = asyncio.run(
+        controller.review_job("job-paused-123", "reject")
+    )
+
+    assert rejected_job.current_state == "requirements_rejected"
+    assert rejected_job.status == "failed"
+    assert rejected_job.state_version == 4
+    assert rejected_job.resume_count == 0
+    assert rejected_job.can_resume is False
+    assert rejected_job.approval_status == "rejected"
+    assert rejected_job.can_approve is False
+    assert rejected_job.can_reject is False
+    assert rejected_job.last_error == "Requirements were rejected"
+    assert gateway.saved_jobs == [rejected_job]
 
 
 def test_resume_job_rejects_unknown_jobs() -> None:
@@ -120,3 +183,13 @@ def test_resume_job_rejects_non_resumable_jobs() -> None:
         match="job is not resumable from status 'completed'",
     ):
         asyncio.run(controller.resume_job("job-completed-789"))
+
+
+def test_review_job_rejects_non_reviewable_jobs() -> None:
+    controller = JobController(StubJobGateway())
+
+    with pytest.raises(
+        JobNotReviewableError,
+        match="job is not awaiting approval",
+    ):
+        asyncio.run(controller.review_job("job-completed-789", "approve"))

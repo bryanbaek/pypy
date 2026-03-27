@@ -2,7 +2,7 @@
 
 from typing import Protocol
 
-from src.backend.models.job import JobDetailDTO
+from src.backend.models.job import JobDetailDTO, JobReviewDecision
 
 
 class InvalidJobIdError(ValueError):
@@ -17,6 +17,10 @@ class JobNotResumableError(ValueError):
     """Raised when a job cannot be resumed from its current state."""
 
 
+class JobNotReviewableError(ValueError):
+    """Raised when a job cannot be approved or rejected."""
+
+
 def _normalize_job_id(job_id: str) -> str:
     normalized_job_id = job_id.strip()
     if not normalized_job_id:
@@ -28,8 +32,56 @@ def _can_resume(status: str) -> bool:
     return status in {"paused", "in_progress"}
 
 
+def _can_review(job: JobDetailDTO) -> bool:
+    return (
+        job.workflow_type == "pm_tool_workflow"
+        and job.status == "paused"
+        and job.current_state == "awaiting_requirements"
+        and job.approval_status == "pending"
+    )
+
+
+def _sync_review_capabilities(job: JobDetailDTO) -> JobDetailDTO:
+    can_review = _can_review(job)
+    return job.model_copy(
+        update={
+            "can_approve": can_review,
+            "can_reject": can_review,
+        }
+    )
+
+
+def _build_approved_job(job: JobDetailDTO) -> JobDetailDTO:
+    return job.model_copy(
+        update={
+            "current_state": "drafting_pr",
+            "status": "in_progress",
+            "state_version": job.state_version + 1,
+            "resume_count": job.resume_count + 1,
+            "can_resume": True,
+            "approval_status": "approved",
+            "last_error": None,
+        }
+    )
+
+
+def _build_rejected_job(job: JobDetailDTO) -> JobDetailDTO:
+    return job.model_copy(
+        update={
+            "current_state": "requirements_rejected",
+            "status": "failed",
+            "state_version": job.state_version + 1,
+            "can_resume": False,
+            "approval_status": "rejected",
+            "last_error": "Requirements were rejected",
+        }
+    )
+
+
 class JobGatewayContract(Protocol):
     """Gateway contract used by job controller orchestration."""
+
+    async def list_jobs(self) -> list[JobDetailDTO]: ...
 
     async def get_job(self, job_id: str) -> JobDetailDTO | None: ...
 
@@ -44,6 +96,9 @@ class InMemoryJobGateway:
             job_id: job.model_copy(deep=True)
             for job_id, job in jobs.items()
         }
+
+    async def list_jobs(self) -> list[JobDetailDTO]:
+        return [job.model_copy(deep=True) for job in self._jobs.values()]
 
     async def get_job(self, job_id: str) -> JobDetailDTO | None:
         job = self._jobs.get(job_id)
@@ -66,6 +121,9 @@ def _default_jobs() -> dict[str, JobDetailDTO]:
             state_version=3,
             resume_count=0,
             can_resume=True,
+            approval_status="pending",
+            can_approve=True,
+            can_reject=True,
             last_error="Waiting for product requirements",
         ),
         "job-running-456": JobDetailDTO(
@@ -76,6 +134,7 @@ def _default_jobs() -> dict[str, JobDetailDTO]:
             state_version=5,
             resume_count=1,
             can_resume=True,
+            approval_status="approved",
         ),
         "job-completed-789": JobDetailDTO(
             job_id="job-completed-789",
@@ -85,6 +144,7 @@ def _default_jobs() -> dict[str, JobDetailDTO]:
             state_version=8,
             resume_count=0,
             can_resume=False,
+            approval_status="approved",
         ),
     }
 
@@ -95,12 +155,20 @@ class JobController:
     def __init__(self, gateway: JobGatewayContract) -> None:
         self._gateway = gateway
 
+    async def list_jobs(self) -> list[JobDetailDTO]:
+        jobs = await self._gateway.list_jobs()
+        return [_sync_review_capabilities(job) for job in jobs]
+
     async def get_job_detail(self, job_id: str) -> JobDetailDTO:
         normalized_job_id = _normalize_job_id(job_id)
         job = await self._gateway.get_job(normalized_job_id)
         if job is None:
             raise JobNotFoundError("job not found")
-        return job
+        return _sync_review_capabilities(job)
+
+    async def _save_job(self, job: JobDetailDTO) -> JobDetailDTO:
+        saved_job = await self._gateway.save_job(_sync_review_capabilities(job))
+        return _sync_review_capabilities(saved_job)
 
     async def resume_job(self, job_id: str) -> JobDetailDTO:
         job = await self.get_job_detail(job_id)
@@ -109,21 +177,36 @@ class JobController:
                 f"job is not resumable from status '{job.status}'"
             )
 
-        resumed_job = job.model_copy(
-            update={
-                "current_state": (
-                    "drafting_pr"
-                    if job.status == "paused"
-                    else job.current_state
-                ),
-                "status": "in_progress",
-                "state_version": job.state_version + 1,
-                "resume_count": job.resume_count + 1,
-                "can_resume": True,
-                "last_error": None,
-            }
+        resumed_job = (
+            _build_approved_job(job)
+            if job.status == "paused" and job.current_state == "awaiting_requirements"
+            else job.model_copy(
+                update={
+                    "status": "in_progress",
+                    "state_version": job.state_version + 1,
+                    "resume_count": job.resume_count + 1,
+                    "can_resume": True,
+                    "last_error": None,
+                }
+            )
         )
-        return await self._gateway.save_job(resumed_job)
+        return await self._save_job(resumed_job)
+
+    async def review_job(
+        self,
+        job_id: str,
+        decision: JobReviewDecision,
+    ) -> JobDetailDTO:
+        job = await self.get_job_detail(job_id)
+        if not _can_review(job):
+            raise JobNotReviewableError("job is not awaiting approval")
+
+        reviewed_job = (
+            _build_approved_job(job)
+            if decision == "approve"
+            else _build_rejected_job(job)
+        )
+        return await self._save_job(reviewed_job)
 
 
 def build_job_controller() -> JobController:
@@ -137,6 +220,7 @@ __all__ = [
     "JobController",
     "JobGatewayContract",
     "JobNotFoundError",
+    "JobNotReviewableError",
     "JobNotResumableError",
     "build_job_controller",
 ]

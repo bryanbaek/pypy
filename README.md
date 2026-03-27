@@ -1,6 +1,6 @@
 # FastAPI Template
 
-This repository is a reusable FastAPI template with a small set of starter examples. The checked-in document and appointment flows are intentionally sample code, not required product logic. A lightweight Bun + Vite + TypeScript page in `src/frontend` is included for browser-facing bootstrap work.
+This repository is a reusable FastAPI template with a small set of starter examples. The checked-in document and appointment flows are intentionally sample code, not required product logic. A lightweight Bun + Vite + TypeScript dashboard in `src/frontend` is included for browser-facing bootstrap work.
 
 For a repository-aligned example of adapting this template into a personal finance tracker, see `FINANCE_APP_IMPLEMENTATION_PLAN.md`.
 
@@ -52,7 +52,7 @@ just test
 
 The template includes a lightweight frontend starter in `src/frontend` plus starter backend layers in `src/backend`:
 
-- `src/frontend`: Bun + Vite + TypeScript demo page. Optional starter UI.
+- `src/frontend`: Bun + Vite + TypeScript PM workflow dashboard. Optional starter UI.
 - `src/backend/controller`: sample document, appointment, and job orchestration. Keep the controller boundary, replace the sample rules.
 - `src/backend/gateway`: outbound integrations. `llm_gateway.py` is an optional starter integration, and `plaid/` adds a minimal Plaid wrapper for Link, Auth, Accounts, Item, and Transactions Sync flows.
 - `src/backend/repository`: Postgres read/write helpers for the sample document and appointment flows.
@@ -60,7 +60,7 @@ The template includes a lightweight frontend starter in `src/frontend` plus star
 - `src/backend/db/postgres.py`: bootstrap helpers for checked-in database assets.
 - `src/backend/db/init-db.sql`: sample tables plus durable workflow-state tables used by local Postgres bootstrap.
 
-The default FastAPI app in `src/backend/main.py` mounts `/`, `/health`, `/jobs/{job_id}/detail`, and `/jobs/{job_id}/resume`. The document and appointment CRUD modules are starter examples that are unit tested in place, but they are not wired into live routes until you choose how to expose them.
+The default FastAPI app in `src/backend/main.py` mounts `/`, `/health`, `/jobs`, `/jobs/{job_id}/detail`, `/jobs/{job_id}/resume`, and `/jobs/{job_id}/review`. The document and appointment CRUD modules are starter examples that are unit tested in place, but they are not wired into live routes until you choose how to expose them.
 
 ## Starter Examples
 
@@ -72,7 +72,7 @@ The sample backend includes three small starter flows:
 
 ## Frontend Demo
 
-The frontend starter lives in `src/frontend`. It is intentionally small: a single Bun + Vite + TypeScript page that links to the FastAPI root and health endpoints. Replace it after the template bootstrap checks pass and your own product routes exist.
+The frontend starter lives in `src/frontend`. It remains intentionally small, but it now acts as a sample PM workflow dashboard: it loads the checked-in job list from FastAPI and lets users approve or reject pending requirements reviews directly in the browser. Replace it after the template bootstrap checks pass and your own product routes exist.
 
 ## Run
 
@@ -90,7 +90,7 @@ Start the FastAPI app with:
 uv run uvicorn src.backend.main:app --reload
 ```
 
-The included FastAPI app starts from `src/backend/main.py` and exposes `/`, `/health`, `/jobs/{job_id}/detail`, and `/jobs/{job_id}/resume`.
+The included FastAPI app starts from `src/backend/main.py` and exposes `/`, `/health`, `/jobs`, `/jobs/{job_id}/detail`, `/jobs/{job_id}/resume`, and `/jobs/{job_id}/review`.
 
 ### Frontend
 
@@ -108,7 +108,7 @@ cd src/frontend
 bun run dev
 ```
 
-Then open `http://localhost:5173` in a browser. The demo page links to the FastAPI starter using `VITE_BACKEND_URL`, which defaults to `http://localhost:8000` for local development.
+Then open `http://localhost:5173` in a browser. The dashboard calls the FastAPI starter using `VITE_BACKEND_URL`, which defaults to `http://localhost:8000` for local development.
 
 Create a production build with:
 

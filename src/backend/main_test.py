@@ -14,8 +14,10 @@ def test_create_app_registers_expected_routes() -> None:
 
     assert "/" in route_paths
     assert "/health" in route_paths
+    assert "/jobs" in route_paths
     assert "/jobs/{job_id}/detail" in route_paths
     assert "/jobs/{job_id}/resume" in route_paths
+    assert "/jobs/{job_id}/review" in route_paths
 
 
 def test_root_endpoint_returns_template_message() -> None:
@@ -30,3 +32,16 @@ def test_health_endpoint_returns_ok_status() -> None:
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_local_frontend_origin_can_call_job_review_route() -> None:
+    response = TestClient(create_app()).options(
+        "/jobs/job-paused-123/review",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:5173"

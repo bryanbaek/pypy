@@ -1,6 +1,7 @@
 """FastAPI application entrypoint for local and containerized runs."""
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.backend.controller.job_controller import build_job_controller
 from src.backend.handlers.job_handlers import job_router
@@ -13,6 +14,12 @@ def create_app() -> FastAPI:
         description="Local entrypoint for the reusable FastAPI template.",
     )
     application.state.job_controller = build_job_controller()
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @application.get("/")
     async def read_root() -> dict[str, str]:
