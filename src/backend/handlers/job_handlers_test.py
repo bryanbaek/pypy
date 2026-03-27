@@ -1,4 +1,4 @@
-"""Tests for mounted job detail and resume routes."""
+"""Tests for mounted job detail, resume, and review routes."""
 
 from fastapi.testclient import TestClient
 
@@ -71,5 +71,113 @@ def test_resume_route_returns_conflict_for_non_resumable_jobs() -> None:
 
     assert response.status_code == 409
     assert response.json() == {
-        "detail": "job is not resumable from status 'completed'"
+        "detail": (
+            "job is not resumable from state 'published_summary' and "
+            "status 'completed'"
+        )
+    }
+
+
+def test_review_route_approves_reviewable_jobs() -> None:
+    client = TestClient(create_app())
+
+    response = client.post(
+        "/jobs/job-review-321/review",
+        json={"decision": "approve"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok",
+        "job": {
+            "job_id": "job-review-321",
+            "workflow_type": "pm_tool_workflow",
+            "current_state": "published_summary",
+            "status": "completed",
+            "state_version": 7,
+            "resume_count": 1,
+            "can_resume": False,
+            "last_error": None,
+        },
+    }
+    assert client.get("/jobs/job-review-321/detail").json() == {
+        "job_id": "job-review-321",
+        "workflow_type": "pm_tool_workflow",
+        "current_state": "published_summary",
+        "status": "completed",
+        "state_version": 7,
+        "resume_count": 1,
+        "can_resume": False,
+        "last_error": None,
+    }
+
+
+def test_review_route_rejects_reviewable_jobs() -> None:
+    client = TestClient(create_app())
+
+    response = client.post(
+        "/jobs/job-review-321/review",
+        json={"decision": "reject"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok",
+        "job": {
+            "job_id": "job-review-321",
+            "workflow_type": "pm_tool_workflow",
+            "current_state": "changes_requested",
+            "status": "paused",
+            "state_version": 7,
+            "resume_count": 1,
+            "can_resume": True,
+            "last_error": "Changes requested in review",
+        },
+    }
+    assert client.get("/jobs/job-review-321/detail").json() == {
+        "job_id": "job-review-321",
+        "workflow_type": "pm_tool_workflow",
+        "current_state": "changes_requested",
+        "status": "paused",
+        "state_version": 7,
+        "resume_count": 1,
+        "can_resume": True,
+        "last_error": "Changes requested in review",
+    }
+
+
+def test_review_route_returns_conflict_for_non_reviewable_jobs() -> None:
+    response = TestClient(create_app()).post(
+        "/jobs/job-completed-789/review",
+        json={"decision": "approve"},
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": (
+            "job is not reviewable from state 'published_summary' and "
+            "status 'completed'"
+        )
+    }
+
+
+def test_review_route_rejects_duplicate_decisions() -> None:
+    client = TestClient(create_app())
+
+    first_response = client.post(
+        "/jobs/job-review-321/review",
+        json={"decision": "approve"},
+    )
+    second_response = client.post(
+        "/jobs/job-review-321/review",
+        json={"decision": "reject"},
+    )
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 409
+    assert second_response.json() == {
+        "detail": (
+            "job is not reviewable from state 'published_summary' and "
+            "status 'completed'"
+        )
     }

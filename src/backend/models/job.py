@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 JobStatus = Literal["paused", "in_progress", "completed", "failed"]
+ReviewDecision = Literal["approve", "reject"]
 
 
 class JobDetailDTO(BaseModel):
@@ -27,4 +28,24 @@ class ResumeJobResponseDTO(BaseModel):
     job: JobDetailDTO
 
 
-__all__ = ["JobDetailDTO", "JobStatus", "ResumeJobResponseDTO"]
+class ReviewJobRequestDTO(BaseModel):
+    """Request payload for a review decision submitted from any client."""
+
+    decision: ReviewDecision
+
+
+class ReviewJobResponseDTO(BaseModel):
+    """Response payload returned after a successful review decision."""
+
+    status: Literal["ok"] = "ok"
+    job: JobDetailDTO
+
+
+__all__ = [
+    "JobDetailDTO",
+    "JobStatus",
+    "ResumeJobResponseDTO",
+    "ReviewDecision",
+    "ReviewJobRequestDTO",
+    "ReviewJobResponseDTO",
+]

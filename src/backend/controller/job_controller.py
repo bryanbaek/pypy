@@ -2,7 +2,7 @@
 
 from typing import Protocol
 
-from src.backend.models.job import JobDetailDTO
+from src.backend.models.job import JobDetailDTO, ReviewDecision
 
 
 class InvalidJobIdError(ValueError):
@@ -17,6 +17,10 @@ class JobNotResumableError(ValueError):
     """Raised when a job cannot be resumed from its current state."""
 
 
+class JobNotReviewableError(ValueError):
+    """Raised when a job cannot accept a review decision."""
+
+
 def _normalize_job_id(job_id: str) -> str:
     normalized_job_id = job_id.strip()
     if not normalized_job_id:
@@ -24,8 +28,12 @@ def _normalize_job_id(job_id: str) -> str:
     return normalized_job_id
 
 
-def _can_resume(status: str) -> bool:
-    return status in {"paused", "in_progress"}
+def _can_resume(job: JobDetailDTO) -> bool:
+    return job.can_resume and job.status in {"paused", "in_progress"}
+
+
+def _can_review(job: JobDetailDTO) -> bool:
+    return job.status == "paused" and job.current_state == "awaiting_review"
 
 
 class JobGatewayContract(Protocol):
@@ -58,6 +66,16 @@ class InMemoryJobGateway:
 
 def _default_jobs() -> dict[str, JobDetailDTO]:
     return {
+        "job-review-321": JobDetailDTO(
+            job_id="job-review-321",
+            workflow_type="pm_tool_workflow",
+            current_state="awaiting_review",
+            status="paused",
+            state_version=6,
+            resume_count=1,
+            can_resume=False,
+            last_error="Pending PM review",
+        ),
         "job-paused-123": JobDetailDTO(
             job_id="job-paused-123",
             workflow_type="pm_tool_workflow",
@@ -104,9 +122,9 @@ class JobController:
 
     async def resume_job(self, job_id: str) -> JobDetailDTO:
         job = await self.get_job_detail(job_id)
-        if not _can_resume(job.status):
+        if not _can_resume(job):
             raise JobNotResumableError(
-                f"job is not resumable from status '{job.status}'"
+                f"job is not resumable from state '{job.current_state}' and status '{job.status}'"
             )
 
         resumed_job = job.model_copy(
@@ -125,6 +143,42 @@ class JobController:
         )
         return await self._gateway.save_job(resumed_job)
 
+    async def review_job(
+        self,
+        job_id: str,
+        decision: ReviewDecision,
+    ) -> JobDetailDTO:
+        job = await self.get_job_detail(job_id)
+        if not _can_review(job):
+            raise JobNotReviewableError(
+                f"job is not reviewable from state '{job.current_state}' and status '{job.status}'"
+            )
+
+        updated_fields: dict[str, object] = {
+            "state_version": job.state_version + 1,
+            "last_error": None,
+        }
+        if decision == "approve":
+            updated_fields.update(
+                {
+                    "current_state": "published_summary",
+                    "status": "completed",
+                    "can_resume": False,
+                }
+            )
+        else:
+            updated_fields.update(
+                {
+                    "current_state": "changes_requested",
+                    "status": "paused",
+                    "can_resume": True,
+                    "last_error": "Changes requested in review",
+                }
+            )
+
+        reviewed_job = job.model_copy(update=updated_fields)
+        return await self._gateway.save_job(reviewed_job)
+
 
 def build_job_controller() -> JobController:
     """Build the sample controller used by mounted job handlers."""
@@ -138,5 +192,6 @@ __all__ = [
     "JobGatewayContract",
     "JobNotFoundError",
     "JobNotResumableError",
+    "JobNotReviewableError",
     "build_job_controller",
 ]

@@ -60,7 +60,7 @@ The template includes a lightweight frontend starter in `src/frontend` plus star
 - `src/backend/db/postgres.py`: bootstrap helpers for checked-in database assets.
 - `src/backend/db/init-db.sql`: sample tables plus durable workflow-state tables used by local Postgres bootstrap.
 
-The default FastAPI app in `src/backend/main.py` mounts `/`, `/health`, `/jobs/{job_id}/detail`, and `/jobs/{job_id}/resume`. The document and appointment CRUD modules are starter examples that are unit tested in place, but they are not wired into live routes until you choose how to expose them.
+The default FastAPI app in `src/backend/main.py` mounts `/`, `/health`, `/jobs/{job_id}/detail`, `/jobs/{job_id}/resume`, and `/jobs/{job_id}/review`. The document and appointment CRUD modules are starter examples that are unit tested in place, but they are not wired into live routes until you choose how to expose them.
 
 ## Starter Examples
 
@@ -72,7 +72,7 @@ The sample backend includes three small starter flows:
 
 ## Frontend Demo
 
-The frontend starter lives in `src/frontend`. It is intentionally small: a single Bun + Vite + TypeScript page that links to the FastAPI root and health endpoints. Replace it after the template bootstrap checks pass and your own product routes exist.
+The frontend starter lives in `src/frontend`. It is intentionally small: a single Bun + Vite + TypeScript page that fetches sample workflow jobs and exercises the mounted review action from the browser. Replace it after the template bootstrap checks pass and your own product routes exist.
 
 ## Run
 
@@ -90,7 +90,7 @@ Start the FastAPI app with:
 uv run uvicorn src.backend.main:app --reload
 ```
 
-The included FastAPI app starts from `src/backend/main.py` and exposes `/`, `/health`, `/jobs/{job_id}/detail`, and `/jobs/{job_id}/resume`.
+The included FastAPI app starts from `src/backend/main.py` and exposes `/`, `/health`, `/jobs/{job_id}/detail`, `/jobs/{job_id}/resume`, and `/jobs/{job_id}/review`.
 
 ### Frontend
 
@@ -108,7 +108,7 @@ cd src/frontend
 bun run dev
 ```
 
-Then open `http://localhost:5173` in a browser. The demo page links to the FastAPI starter using `VITE_BACKEND_URL`, which defaults to `http://localhost:8000` for local development.
+Then open `http://localhost:5173` in a browser. The demo page fetches the sample review queue from the FastAPI starter using `VITE_BACKEND_URL`, which defaults to `http://localhost:8000` for local development.
 
 Create a production build with:
 
