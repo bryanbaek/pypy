@@ -41,10 +41,10 @@ a {
 }
 
 .hero-card,
-.info-card {
+.job-card {
   border: 1px solid rgba(16, 19, 34, 0.08);
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.84);
   box-shadow: 0 28px 80px rgba(16, 19, 34, 0.12);
   backdrop-filter: blur(16px);
 }
@@ -64,16 +64,25 @@ a {
 }
 
 .hero-card h1,
-.info-card h2 {
+.section-copy h2,
+.job-card h3 {
   margin: 0;
   color: #171a2b;
 }
 
+.hero-card h1,
+.section-copy h2 {
+  font-family: "Iowan Old Style", "Palatino Linotype", serif;
+}
+
 .hero-card h1 {
   max-width: 11ch;
-  font-family: "Iowan Old Style", "Palatino Linotype", serif;
   font-size: clamp(2.9rem, 5vw, 5rem);
   line-height: 0.95;
+}
+
+.section-copy h2 {
+  font-size: clamp(2rem, 4vw, 3rem);
 }
 
 .lede {
@@ -84,7 +93,7 @@ a {
 }
 
 .lede code,
-.info-card code {
+.backend-pill code {
   padding: 0.16rem 0.45rem;
   border-radius: 999px;
   background: rgba(16, 19, 34, 0.08);
@@ -97,53 +106,236 @@ a {
   margin-top: 2rem;
 }
 
-.hero-actions a {
+.hero-actions a,
+.hero-actions button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0.9rem 1.2rem;
+  border: 0;
   border-radius: 999px;
+  font: inherit;
   font-weight: 600;
   text-decoration: none;
+  cursor: pointer;
   transition:
     transform 160ms ease,
     box-shadow 160ms ease,
     background-color 160ms ease;
 }
 
-.hero-actions a:first-child {
+.hero-actions button {
   background: #171a2b;
   color: #fff9f0;
 }
 
-.hero-actions a:last-child {
+.hero-actions a {
   background: rgba(255, 255, 255, 0.72);
   color: #171a2b;
 }
 
-.hero-actions a:hover {
+.hero-actions a:hover,
+.hero-actions button:hover {
   transform: translateY(-1px);
   box-shadow: 0 12px 30px rgba(16, 19, 34, 0.16);
 }
 
-.info-grid {
-  display: grid;
-  gap: 1rem;
-  margin-top: 1rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.hero-actions button:disabled {
+  cursor: wait;
+  opacity: 0.78;
+  transform: none;
+  box-shadow: none;
 }
 
-.info-card {
-  padding: 1.5rem;
-}
-
-.info-card p {
-  margin: 1rem 0 0;
+.backend-pill {
+  margin: 1.4rem 0 0;
   color: #44506c;
 }
 
+.dashboard-section {
+  margin-top: 1rem;
+}
+
+.section-copy {
+  margin-bottom: 1rem;
+}
+
+.section-copy p:last-child {
+  margin: 0.85rem 0 0;
+  max-width: 44rem;
+  color: #44506c;
+}
+
+.job-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.job-card {
+  padding: 1.5rem;
+}
+
+.job-card-header {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.28rem 0.72rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.status-paused {
+  background: rgba(176, 117, 17, 0.12);
+  color: #8d5800;
+}
+
+.status-in_progress {
+  background: rgba(17, 88, 164, 0.12);
+  color: #0f4c8a;
+}
+
+.status-completed {
+  background: rgba(13, 111, 79, 0.12);
+  color: #0f6d4d;
+}
+
+.status-failed {
+  background: rgba(160, 41, 41, 0.12);
+  color: #8f1e1e;
+}
+
+.approval-pending {
+  background: rgba(90, 71, 133, 0.12);
+  color: #5d4990;
+}
+
+.approval-approved {
+  background: rgba(13, 111, 79, 0.12);
+  color: #0f6d4d;
+}
+
+.approval-rejected {
+  background: rgba(160, 41, 41, 0.12);
+  color: #8f1e1e;
+}
+
+.job-summary {
+  margin: 1rem 0 0;
+  color: #3d465f;
+}
+
+.job-metadata {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 1.25rem 0 0;
+}
+
+.job-metadata div {
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  background: rgba(16, 19, 34, 0.04);
+}
+
+.job-metadata dt {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6e6a86;
+}
+
+.job-metadata dd {
+  margin: 0.45rem 0 0;
+  color: #171a2b;
+}
+
+.inline-note,
+.inline-error {
+  margin: 1rem 0 0;
+  padding: 0.85rem 1rem;
+  border-radius: 18px;
+}
+
+.inline-note {
+  background: rgba(16, 19, 34, 0.05);
+  color: #44506c;
+}
+
+.inline-error {
+  background: rgba(160, 41, 41, 0.1);
+  color: #8f1e1e;
+}
+
+.job-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.action-button {
+  flex: 1;
+  min-height: 2.9rem;
+  border: 0;
+  border-radius: 16px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
+}
+
+.action-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(16, 19, 34, 0.12);
+}
+
+.approve-button {
+  background: #171a2b;
+  color: #fff9f0;
+}
+
+.reject-button {
+  background: rgba(160, 41, 41, 0.12);
+  color: #8f1e1e;
+}
+
+.action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+  box-shadow: none;
+}
+
+.loading-card,
+.error-card,
+.empty-card {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 900px) {
-  .info-grid {
+  .job-grid,
+  .job-metadata {
     grid-template-columns: 1fr;
   }
 }
@@ -155,7 +347,7 @@ a {
   }
 
   .hero-card,
-  .info-card {
+  .job-card {
     border-radius: 24px;
   }
 
@@ -166,5 +358,9 @@ a {
   .hero-card h1 {
     max-width: none;
     font-size: 2.75rem;
+  }
+
+  .job-actions {
+    flex-direction: column;
   }
 }
